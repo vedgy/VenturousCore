@@ -1,0 +1,9 @@
+[submodule "modules/vedgTools/CMakeModules"]
+	path = modules/vedgTools/CMakeModules
+	url = https://github.com/vedgy/CMakeModules.git
+[submodule "modules/vedgTools/TemplateUtilities"]
+	path = modules/vedgTools/TemplateUtilities
+	url = https://github.com/vedgy/TemplateUtilities.git
+[submodule "modules/vedgTools/QtCoreUtilities"]
+	path = modules/vedgTools/QtCoreUtilities
+	url = https://github.com/vedgy/QtCoreUtilities.git

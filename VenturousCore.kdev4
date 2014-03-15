@@ -1,0 +1,4 @@
+[Project]
+Name=VenturousCore
+Manager=KDevCMakeManager
+VersionControl=kdevgit
