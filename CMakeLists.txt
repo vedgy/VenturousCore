@@ -63,7 +63,7 @@ include_directories(
 
 set(Sources
     ${Sources_Path}/ItemTree.cpp ${Sources_Path}/AudaciousMediaPlayer.cpp
-    ${Sources_Path}/AddingItems.cpp
+    ${Sources_Path}/AddingItems.cpp ${Sources_Path}/History.cpp
 )
 
 
@@ -77,6 +77,6 @@ include(vedgTools/LibraryLinkQtCoreUtilitiesToTarget)
 
 set_target_properties(${Target_Name} PROPERTIES
                         PUBLIC_HEADER
-    "ItemTree.hpp;ItemTree-inl.hpp;MediaPlayer.hpp;AddingItems.hpp")
+    "ItemTree.hpp;ItemTree-inl.hpp;MediaPlayer.hpp;AddingItems.hpp;History.hpp")
 
 message(</${Target_Name}>)
