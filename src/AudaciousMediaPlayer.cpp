@@ -84,7 +84,7 @@ std::vector<std::string> analyzeErrors(const std::string & errors)
         // Audacious duplicates messages sometimes, so this check prevents
         // reporting the same missing item twice.
         if (missingFilesAndDirs.empty() || missingFilesAndDirs.back() != item)
-            missingFilesAndDirs.push_back(item);
+            missingFilesAndDirs.emplace_back(item);
     }
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER

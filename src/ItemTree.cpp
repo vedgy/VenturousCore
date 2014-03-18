@@ -18,8 +18,8 @@
 
 # include "ItemTree.hpp"
 
-# include <cassert>
 # include <cstddef>
+# include <cassert>
 # include <utility>
 # include <functional>
 # include <algorithm>
@@ -228,6 +228,7 @@ std::string Tree::load(const std::string & filename)
     std::ifstream is(filename);
     /// Holds pointers to last node on each currently open level.
     std::vector<Node *> nodeStack { & root_ };
+
     std::string line;
     while (std::getline(is, line)) {
         const std::size_t indent = line.find_first_not_of(indentSymbol);
@@ -249,7 +250,7 @@ std::string Tree::load(const std::string & filename)
         std::string name = std::move(line).substr(indent + 1);
         nodeStack.back()->children_.push_back(Node(std::move(name), playable));
 
-        nodeStack.push_back(& nodeStack.back()->children_.back());
+        nodeStack.emplace_back(& nodeStack.back()->children_.back());
     }
 
     if (is.is_open() && ! is.bad()) {

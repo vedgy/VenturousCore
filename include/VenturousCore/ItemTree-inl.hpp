@@ -46,7 +46,7 @@ std::deque<Node *> Node::descendantPath(
 {
     std::deque<Node *> nodes { this };
     for (; begin != end && nodes.back() != nullptr; ++begin)
-        nodes.push_back(nodes.back()->child(* begin));
+        nodes.emplace_back(nodes.back()->child(* begin));
     nodes.pop_front();
     return nodes;
 }
