@@ -25,8 +25,8 @@
 # include <algorithm>
 # include <deque>
 # include <string>
-# include <fstream>
 # include <iterator>
+# include <fstream>
 
 
 namespace
@@ -77,26 +77,6 @@ void History::setMaxSize(const std::size_t maxSize)
         items_.erase(items_.begin() + maxSize_, items_.end());
 }
 
-std::string History::getRelativePath(const std::size_t index,
-                                     int nHiddenDirs) const
-{
-    std::string entry = items_.at(index);
-    if (nHiddenDirs == 0)
-        return entry;
-    if (nHiddenDirs < 0)
-        throw Error("negative number of hidden directories.");
-    // skipping first symbol due to ItemTree's path specifics.
-    std::size_t i = 0;
-    do {
-        i = entry.find('/', i + 1);
-        if (i == std::string::npos)
-            return std::string();
-    }
-    while (--nHiddenDirs > 0);
-
-    return std::move(entry).substr(i + 1);
-}
-
 void History::push(std::string entry)
 {
     if (entry.empty())
@@ -120,10 +100,12 @@ void History::remove(std::vector<std::size_t> indices)
     std::sort(indices.begin(), indices.end());
     if (indices.back() >= items_.size())
         throw Error(outOfBoundsErrorMessage());
+    assert(std::adjacent_find(indices.begin(), indices.end()) == indices.end()
+           && "No duplicates are allowed!");
 
     std::deque<std::string> newItems;
     for (std::size_t i = 0, indicesIndex = 0; i < items_.size(); ++i) {
-        while (indicesIndex < indices.size() && indices[indicesIndex] < i)
+        if (indicesIndex < indices.size() && indices[indicesIndex] < i)
             ++indicesIndex;
         if (indicesIndex < indices.size() && indices[indicesIndex] == i)
             continue;

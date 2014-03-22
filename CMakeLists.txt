@@ -77,6 +77,6 @@ include(vedgTools/LibraryLinkQtCoreUtilitiesToTarget)
 
 set_target_properties(${Target_Name} PROPERTIES
                         PUBLIC_HEADER
-    "ItemTree.hpp;ItemTree-inl.hpp;MediaPlayer.hpp;AddingItems.hpp;History.hpp")
+    "ItemTree.hpp;ItemTree-inl.hpp;History.hpp;MediaPlayer.hpp;AddingItems.hpp")
 
 message(</${Target_Name}>)

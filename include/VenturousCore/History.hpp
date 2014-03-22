@@ -60,18 +60,13 @@ public:
     /// items().size() <= maxSize().
     void setMaxSize(std::size_t maxSize);
 
-    /// @return items().at(index) with first nHiddenDirs directories removed
-    /// from the path. If nHiddenDirs exceeds number of directories in the
-    /// entry, filename is returned.
-    /// @throw Error If nHiddenDirs < 0.
-    std::string getRelativePath(std::size_t index, int nHiddenDirs) const;
-
     /// @brief Adds entry to the history.
     /// @throw Error If entry.empty() == true.
     void push(std::string entry);
 
     /// @brief Removes specified indices from the history.
-    /// @param indices Collection of indices, may be not sorted.
+    /// @param indices Collection of indices, which may be not sorted, but must
+    /// not contain duplicates.
     /// @throw Error If at least one index is bigger or equal to items().size().
     void remove(std::vector<std::size_t> indices);
 
