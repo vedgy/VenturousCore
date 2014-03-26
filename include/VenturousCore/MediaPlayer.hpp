@@ -53,8 +53,7 @@ public:
     /// Does not start media player process.
     explicit MediaPlayer();
 
-    /// @brief Calls quit() if (isRunning() == true).
-    /// NOTE: can block execution for ExternalPlayerTimeout ms.
+    /// @brief Ensures that external player quits gracefully if isRunning().
     ~MediaPlayer();
 
     /// @brief Returns true if player process, which was started by this
@@ -64,26 +63,16 @@ public:
     /// @brief Replaces current slot with specified value.
     void setFinishedSlot(FinishedSlot slot);
 
-    /// @brief ExternalPlayerTimeout property holds delay time [ms] (>= 0)
-    /// between starting external player and quitting / restarting it or setting
-    /// recommended options. This timeout is necessary because external player
-    /// may not be ready to accept commands immediately after start.
-    /// This property has a reasonable, but, of course, not optimal default.
-
-    /// @return Current ExternalPlayerTimeout value.
-    int getExternalPlayerTimeout() const;
-    /// @param milliseconds Desired ExternalPlayerTimeout value.
-    void setExternalPlayerTimeout(int milliseconds);
-
-    /// @brief If (isRunning() == true) does nothing. Otherwise, calls quit(),
-    /// then starts player. Playback of current playlist will be started.
+    /// @brief If (isRunning() == true) does nothing. Otherwise, starts
+    /// (or restarts) external player.
+    /// Playback of current external player's playlist will be started.
     void start();
 
-    /// @brief Calls quit(), then starts player with specified path to item.
+    /// @brief Starts player with specified path to item.
     /// @param pathToItem Absolute path to playable item.
     void start(const std::string & pathToItem);
 
-    /// @brief Calls quit(), then starts player with specified paths to items.
+    /// @brief Starts player with specified paths to items.
     /// @param pathsToItems Absolute paths to playable items.
     void start(const std::vector<std::string> & pathsToItems);
 
@@ -102,7 +91,7 @@ public:
     /// @param autoSet Desired AutoSetOptions value.
     void setAutoSetOptions(bool autoSet);
 
-    /// @brief Blocks FinishedSlot and attempts to quit player process.
+    /// @brief Blocks FinishedSlot and quits external player.
     /// If external player is not running, call has no effect.
     void quit();
 

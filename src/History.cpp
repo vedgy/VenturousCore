@@ -16,6 +16,11 @@
  VenturousCore.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+# ifdef DEBUG_VENTUROUS_HISTORY
+# include <iostream>
+# endif
+
+
 # include "History.hpp"
 
 # include <cstddef>
@@ -98,6 +103,14 @@ void History::remove(std::vector<std::size_t> indices)
     }
 
     std::sort(indices.begin(), indices.end());
+
+# ifdef DEBUG_VENTUROUS_HISTORY
+    std::cout << "Indices of entries, scheduled for removal from history:";
+    for (std::size_t i : indices)
+        std::cout << ' ' << i;
+    std::cout << std::endl;
+# endif
+
     if (indices.back() >= items_.size())
         throw Error(outOfBoundsErrorMessage());
     assert(std::adjacent_find(indices.begin(), indices.end()) == indices.end()

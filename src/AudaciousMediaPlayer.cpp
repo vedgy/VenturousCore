@@ -29,7 +29,6 @@
 # include <QStringList>
 # include <QObject>
 # include <QProcess>
-# include <QTimer>
 
 # include <cstddef>
 # include <utility>
@@ -47,6 +46,15 @@ void execute(const QString & command)
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
     std::cout << QtUtilities::qStringToString(command) << std::endl;
 # endif
+}
+
+/// @brief Executes command and returns its stdout.
+QString executeAndGetOutput(const QString & command)
+{
+    QProcess process;
+    process.start(command);
+    process.waitForFinished(-1);
+    return process.readAllStandardOutput();
 }
 
 namespace Audacious
@@ -107,6 +115,12 @@ const QString commandName = "audtool",
               shutdownCommand = commandName + " shutdown";
 const QString on = "on\n", off = "off\n";
 
+/// @return true If Audacious is running, false otherwise.
+bool isAudaciousRunning()
+{
+    return ! executeAndGetOutput(commandName + " version").isEmpty();
+}
+
 /// @brief Sets playlist option to specified value - desiredStatus.
 /// @param optionName Playlist option to be set.
 void setStatus(const QString & optionName, const QString & desiredStatus)
@@ -114,10 +128,7 @@ void setStatus(const QString & optionName, const QString & desiredStatus)
     const QString baseCommand = commandName + " playlist-" + optionName;
 
     const QString statusCommand = baseCommand + "-status";
-    QProcess process;
-    process.start(statusCommand);
-    process.waitForFinished(-1);
-    const QString stdOut = process.readAllStandardOutput();
+    const QString stdOut = executeAndGetOutput(statusCommand);
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
     std::cout << QtUtilities::qStringToString(statusCommand)
@@ -128,6 +139,16 @@ void setStatus(const QString & optionName, const QString & desiredStatus)
 
     if (stdOut != desiredStatus)
         execute(baseCommand + "-toggle");
+}
+
+void setRecommendedOptions()
+{
+    if (isAudaciousRunning()) {
+        setStatus("auto-advance", on);
+        setStatus("repeat", off);
+        setStatus("shuffle", off);
+        setStatus("stop-after", off);
+    }
 }
 
 }
@@ -141,48 +162,39 @@ class MediaPlayer::Impl : public QObject
 public:
     explicit Impl();
 
-    /// @brief Ensures that external player quits gracefully if isRunning().
-    ~Impl();
+    ~Impl() { finishPlayerProcess(); }
 
     /// @brief Returns true if this Impl controls external player process.
     bool isRunning() const;
 
-    /// @brief Requests starting player with specified arguments list.
+    /// @brief Starts player with specified arguments list.
     void start(const QStringList & arguments);
 
-    /// @brief Requests setting recommended options.
-    void setAudtoolOptions();
-
-    /// @brief Requests quitting audacious.
+    /// @brief Quits Audacious.
     void quit();
 
     FinishedSlot finished_ { [](bool, int, std::vector<std::string>) {} };
     bool autoSetOptions_ = true;
-    /// Audacious timeout in ms.
-    int timeout_ = 2000;
 
 private:
-    void startImmediately(const QStringList & arguments);
-    void quitImmediately();
-    void setAudtoolOptionsImmediately();
+    /// @brief Gracefully finishes playerProcess_ if isRunning().
+    void finishPlayerProcess();
+    /// @brief Ensures that unmanaged Audacious process is not running if
+    /// (! isRunning()).
+    void quitUnmanagedAudaciousProcess();
+
 
     QProcess playerProcess_;
-    /// Determines if audacious is ready to accept audtool commands. Depends on
-    /// how long ago audacious was started.
-    bool audtoolReady_ = true;
-    /// Holds arguments for next start() call. If empty, no start() was
-    /// requested.
-    QStringList queuedStartArguments_;
-    /// If true, quit was requested.
-    bool queuedQuit_ = false;
-    /// If true, setting audtool options was requested.
-    bool queuedSettingAudtoolOptions_ = false;
+    /// Timer is used for auto-setting options. It is necessary, because
+    /// Audacious is not ready to accept audtool commands immediately after
+    /// start.
+    int timerId_;
 
 private slots:
     /// @brief Calls finished_.
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    /// @brief Executes queued tasks.
-    void onTimeoutPassed();
+    /// @brief Calls setAudtoolOptions().
+    void timerEvent(QTimerEvent *) override;
 };
 
 
@@ -192,15 +204,6 @@ MediaPlayer::Impl::Impl(): QObject()
             SLOT(onFinished(int, QProcess::ExitStatus)));
 }
 
-MediaPlayer::Impl::~Impl()
-{
-    if (isRunning()) {
-        if (! audtoolReady_)
-            std::this_thread::sleep_for(std::chrono::milliseconds(timeout_));
-        quitImmediately();
-    }
-}
-
 bool MediaPlayer::Impl::isRunning() const
 {
     return playerProcess_.state() != QProcess::NotRunning;
@@ -208,20 +211,58 @@ bool MediaPlayer::Impl::isRunning() const
 
 void MediaPlayer::Impl::start(const QStringList & arguments)
 {
-    queuedQuit_ = false;
-    if (audtoolReady_)
-        startImmediately(arguments);
-    else
-        queuedStartArguments_ = arguments;
+    /// If Audacious is already running with proper arguments (isRunning())
+    /// AND is ready to accept commands (Audtool::isAudaciousRunning()), there
+    /// is no need to restart it.
+    if (isRunning() && Audtool::isAudaciousRunning())
+        QProcess::execute(Audacious::commandName, arguments);
+    else {
+        quit();
+        playerProcess_.start(Audacious::commandName, arguments);
+    }
+
+    if (autoSetOptions_) {
+        killTimer(timerId_);
+        timerId_ = startTimer(3000);
+    }
+
+# ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
+    std::cout << QtUtilities::qStringToString(Audacious::commandName);
+    for (const QString & arg : arguments)
+        std::cout << " \"" << QtUtilities::qStringToString(arg) << '"';
+    std::cout << std::endl;
+# endif
 }
 
 void MediaPlayer::Impl::quit()
 {
-    queuedStartArguments_.clear();
-    if (audtoolReady_)
-        quitImmediately();
-    else
-        queuedQuit_ = true;
+    finishPlayerProcess();
+    quitUnmanagedAudaciousProcess();
+}
+
+
+void MediaPlayer::Impl::finishPlayerProcess()
+{
+    if (isRunning()) {
+        const bool blocked = playerProcess_.blockSignals(true);
+
+        do {
+            execute(Audtool::shutdownCommand);
+        }
+        while (! playerProcess_.waitForFinished(5));
+
+        playerProcess_.blockSignals(blocked);
+    }
+}
+
+void MediaPlayer::Impl::quitUnmanagedAudaciousProcess()
+{
+    if (! isRunning()) {
+        while (Audtool::isAudaciousRunning()) {
+            execute(Audtool::shutdownCommand);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    }
 }
 
 
@@ -240,71 +281,12 @@ void MediaPlayer::Impl::onFinished(
     finished_(crashExit, exitCode, Audacious::analyzeErrors(errors));
 }
 
-void MediaPlayer::Impl::setAudtoolOptions()
+
+void MediaPlayer::Impl::timerEvent(QTimerEvent *)
 {
-    if (audtoolReady_)
-        setAudtoolOptionsImmediately();
-    else
-        queuedSettingAudtoolOptions_ = true;
-}
-
-
-void MediaPlayer::Impl::startImmediately(const QStringList & arguments)
-{
-    quitImmediately();
-    playerProcess_.start(Audacious::commandName, arguments);
-
-    if (autoSetOptions_)
-        queuedSettingAudtoolOptions_ = true;
-
-    audtoolReady_ = false;
-    QTimer::singleShot(timeout_, this, SLOT(onTimeoutPassed()));
-
-# ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
-    std::cout << QtUtilities::qStringToString(Audacious::commandName);
-    for (const QString & arg : arguments)
-        std::cout << " \"" << QtUtilities::qStringToString(arg) << '"';
-    std::cout << std::endl;
-# endif
-
-    queuedStartArguments_.clear();
-}
-
-void MediaPlayer::Impl::quitImmediately()
-{
-    if (queuedSettingAudtoolOptions_)
-        setAudtoolOptionsImmediately();
-
-    const bool blocked = playerProcess_.blockSignals(true);
-    execute(Audtool::shutdownCommand);
-    playerProcess_.waitForFinished(-1);
-    playerProcess_.blockSignals(blocked);
-
-    queuedQuit_ = false;
-}
-
-void MediaPlayer::Impl::setAudtoolOptionsImmediately()
-{
-    using namespace Audtool;
-    setStatus("auto-advance", on);
-    setStatus("repeat", off);
-    setStatus("shuffle", off);
-    setStatus("stop-after", off);
-
-    queuedSettingAudtoolOptions_ = false;
-}
-
-
-void MediaPlayer::Impl::onTimeoutPassed()
-{
-    audtoolReady_ = true;
-
-    if (queuedQuit_)
-        quitImmediately();
-    else if (! queuedStartArguments_.empty())
-        startImmediately(queuedStartArguments_);
-    else if (queuedSettingAudtoolOptions_)
-        setAudtoolOptionsImmediately();
+    killTimer(timerId_);
+    timerId_ = 0;
+    Audtool::setRecommendedOptions();
 }
 
 
@@ -329,18 +311,6 @@ bool MediaPlayer::isRunning() const
 void MediaPlayer::setFinishedSlot(FinishedSlot slot)
 {
     impl_->finished_ = std::move(slot);
-}
-
-int MediaPlayer::getExternalPlayerTimeout() const
-{
-    return impl_->timeout_;
-}
-
-void MediaPlayer::setExternalPlayerTimeout(const int milliseconds)
-{
-    if (milliseconds < 0)
-        throw Error("negative timeout.");
-    impl_->timeout_ = milliseconds;
 }
 
 void MediaPlayer::start()
@@ -368,7 +338,7 @@ void MediaPlayer::start(const std::vector<std::string> & pathsToItems)
 
 void MediaPlayer::setRecommendedOptions()
 {
-    impl_->setAudtoolOptions();
+    Audtool::setRecommendedOptions();
 }
 
 bool MediaPlayer::getAutoSetOptions() const
