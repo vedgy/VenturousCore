@@ -17,6 +17,7 @@
 */
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
+# include <QtCoreUtilities/String.hpp>
 # include <iostream>
 # endif
 

@@ -17,6 +17,7 @@
 */
 
 # ifdef DEBUG_VENTUROUS_ADDING_ITEMS
+# include <QtCoreUtilities/String.hpp>
 # include <iostream>
 # endif
 

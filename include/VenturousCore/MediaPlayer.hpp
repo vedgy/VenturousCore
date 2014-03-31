@@ -35,7 +35,7 @@ public:
         explicit Error(const std::string & sWhat) : std::runtime_error(sWhat) {}
     };
 
-    /// This type is used for external method, which is called after task is
+    /// This type is used for external function, which is called after task is
     /// finished.
     /// @param crashExit True if external player crashed.
     /// @param exitCode Exit code of external player.
