@@ -56,8 +56,8 @@ public:
     /// @brief Ensures that external player quits gracefully if isRunning().
     ~MediaPlayer();
 
-    /// @brief Returns true if player process, which was started by this
-    /// instance of MediaPlayer, is running.
+    /// @brief Returns true if player process that was started by this
+    /// instance of MediaPlayer is running.
     bool isRunning() const;
 
     /// @brief Replaces current slot with specified value.

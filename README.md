@@ -1,6 +1,6 @@
 ## Introduction
 
-<b>VenturousCore</b> is a core library for a wrapper, which uses media player's
+<b>VenturousCore</b> is a core library for a wrapper that uses media player's
 command line interface.
 Currently only Audacious media player is supported, but adding support for
 other players should be quite simple.

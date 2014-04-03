@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 # Depends on TemplateUtilities, Qt, QtCoreUtilities.
-# NOTE: projects, which use ItemTree-inl.hpp, must
+# NOTE: projects that use ItemTree-inl.hpp must
 # include_directories(${TemplateUtilities_PublicHeaders_Path})
 set(Target_Name VenturousCore)
 set(CAP_Target_Name VENTUROUS_CORE)

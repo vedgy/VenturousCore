@@ -103,7 +103,7 @@ std::string Node::getRelativeChildItemPath(int relativeId) const
     {
         Node fake(std::string(), false);
         fake.accumulatedItemCount_ = relativeId;
-        // Find a child, which contains (or is itself) the necessary Item.
+        // Find a child that contains (or is itself) the necessary Item.
         it = std::upper_bound(children_.cbegin(), children_.cend(), fake,
                               [](const Node & lhs, const Node & rhs)
         { return lhs.accumulatedItemCount_ < rhs.accumulatedItemCount_; });

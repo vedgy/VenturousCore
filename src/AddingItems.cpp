@@ -85,7 +85,7 @@ private:
     /// from it.
     void addMediaDirFirst();
 
-    /// @return List of all files in dir_, which match policy.filePatterns.
+    /// @return List of all files in dir_ that match policy.filePatterns.
     QStringList getFileList() const;
     /// @return true if dir_ is media dir.
     bool isMediaDir() const;

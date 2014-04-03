@@ -37,7 +37,7 @@ public:
 
 
 /// @brief Playable entity (directory or file) is called "Item".\n
-/// Node can be either Item or directory, which contains Items at some nesting
+/// Node can be either Item or directory that contains Items at some nesting
 /// level.
 class Node
 {
@@ -131,7 +131,7 @@ private:
     /// @param precedingCount Accumulated Item count before this node.
     void recalculateItemCount(int precedingCount);
 
-    /// @brief Removes nodes, which are not Items and have no playable
+    /// @brief Removes nodes that are not Items and have no playable
     /// descendants.
     void cleanUp();
 
@@ -147,7 +147,7 @@ private:
     bool playable_;
     /// Number of Items before {next node on the same level as this node}.
     int accumulatedItemCount_;
-    /// Collection of nodes, which are contained in this node's directory.
+    /// Collection of nodes that are contained in this node's directory.
     /// This collection is always sorted by name­_, is empty for file-nodes.
     std::vector<Node> children_;
 };
@@ -184,7 +184,7 @@ public:
 
     int itemCount() const { return root_.accumulatedItemCount_; }
 
-    /// @return {subdirectories of root directory} or {disks}, which were
+    /// @return {subdirectories of root directory} or {disks} that were
     /// added to this tree.
     const std::vector<Node> & topLevelNodes() const { return root_.children(); }
     /// NOTE (2).
@@ -238,7 +238,7 @@ private:
 
     /// Although some systems do not have common root, this field is used
     /// to simplify code. root_ always has empty name and is not playable.
-    /// Absolute paths, which don't start with '/', are also supported.
+    /// Absolute paths that don't start with '/' are also supported.
     Node root_ { std::string(), false };
 };
 

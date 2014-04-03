@@ -37,23 +37,23 @@ extern const QStringList allAudioPatterns;
 
 
 struct Policy {
-    /// Files, which match filePatterns, can be added as items in itemTree.
+    /// Files that match filePatterns can be added as items in itemTree.
     QStringList filePatterns = allMetaDataPatterns;
     /// Directory is considered to be media dir if it contains (as direct
-    /// children!) files, which match mediaDirFilePatterns.
+    /// children!) files that match mediaDirFilePatterns.
     QStringList mediaDirFilePatterns = allAudioPatterns;
 
-    /// If true, files, which match filePatterns, are inserted in itemTree.
+    /// If true, files that match filePatterns are inserted in itemTree.
     bool addFiles = true;
     /// If true, media dirs are inserted in itemTree.
     bool addMediaDirs = true;
 
     /// Next 2 flags are considered only if
-    /// (addFiles && addDirsWithMedia == true) and files, which match
-    /// filePatterns, were found in media dir. Let's denote such a situation as
+    /// (addFiles && addDirsWithMedia == true) and files that match
+    /// filePatterns were found in media dir. Let's denote such a situation as
     /// 'BothFound'. All 4 combinations of next 2 flags are allowed.
 
-    /// If true, files, which match filePatterns, are added
+    /// If true, files that match filePatterns are added
     /// in case of BothFound.
     bool ifBothAddFiles = true;
     /// If true, media dir is added in case of BothFound.
