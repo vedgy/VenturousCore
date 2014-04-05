@@ -23,6 +23,8 @@
 
 # include "History.hpp"
 
+# include <TemplateUtilities/Miscellaneous.hpp>
+
 # include <cstddef>
 # include <cassert>
 # include <cctype>
@@ -54,14 +56,16 @@ bool History::load(const std::string & filename)
 
     std::string line;
     while (items_.size() < maxSize_ && std::getline(is, line)) {
-        const auto begin = std::find_if_not(line.begin(), line.end(),
-        [](char c) { return std::isspace(c); });
-
-        if (begin == line.begin())
-            items_.emplace_back(std::move(line));
-        else if (begin != line.end())
-            items_.emplace_back(line.substr(begin - line.begin()));
+        const auto begin =
+            std::find_if_not(line.begin(), line.end(),
+                             TemplateUtilities::safeCtype<std::isspace>);
         // skipping lines without non-whitespace characters.
+        if (begin != line.end()) {
+            if (begin == line.begin())
+                items_.emplace_back(std::move(line));
+            else
+                items_.emplace_back(line.substr(begin - line.begin()));
+        }
     }
 
     return is.is_open() && ! is.bad();
