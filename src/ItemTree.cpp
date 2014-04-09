@@ -122,7 +122,7 @@ std::string Node::getRelativeChildItemPath(int relativeId) const
 
 std::string Node::getChildItemPath(const int relativeId) const
 {
-    return '/' + name_ + getRelativeChildItemPath(relativeId);
+    return name_ + '/' + getRelativeChildItemPath(relativeId);
 }
 
 void Node::insertItem(std::string relativePath)
@@ -248,7 +248,8 @@ std::string Tree::load(const std::string & filename)
 
         const bool playable = (line[indent] == itemSymbol);
         std::string name = std::move(line).substr(indent + 1);
-        nodeStack.back()->children_.push_back(Node(std::move(name), playable));
+        nodeStack.back()->children_.emplace_back(
+            Node(std::move(name), playable));
 
         nodeStack.emplace_back(& nodeStack.back()->children_.back());
     }
@@ -277,9 +278,9 @@ bool Tree::save(const std::string & filename) const
 std::string Tree::getItemAbsolutePath(const int itemId) const
 {
     std::string path = root_.getRelativeChildItemPath(itemId);
-    assert(path.at(0) == '/');
+    assert(! path.empty() && path.back() == '/');
     // remove extra '/'.
-    path.erase(0, 1);
+    path.pop_back();
     return path;
 }
 
