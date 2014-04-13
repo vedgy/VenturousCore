@@ -1,11 +1,11 @@
 ## Introduction
 
-<b>VenturousCore</b> is a core library for a wrapper that uses media player's
-command line interface.
+<b>VenturousCore</b> is a core library for playback manager, which uses
+media player's command line interface.
 Currently only Audacious media player is supported, but adding support for
 other players should be quite simple.
-This library is used by Venturous - GUI wrapper. It can also be used by
-command-line-interface wrapper.
+This library is used by Venturous - GUI random playback manager.
+It can also be used by command-line-interface playback manager.
 This library depends on QtCore library. Both Qt4 and Qt5 are supported.
 It also depends on vedgTools/CMakeModules, vedgTools/TemplateUtilities and
 vedgTools/QtCoreUtilities libraries, which are present as a submodules in this

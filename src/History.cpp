@@ -122,11 +122,13 @@ void History::remove(std::vector<std::size_t> indices)
 
     std::deque<std::string> newItems;
     for (std::size_t i = 0, indicesIndex = 0; i < items_.size(); ++i) {
-        if (indicesIndex < indices.size() && indices[indicesIndex] < i)
-            ++indicesIndex;
-        if (indicesIndex < indices.size() && indices[indicesIndex] == i)
-            continue;
+        if (indicesIndex < indices.size()) {
+            if (indices[indicesIndex] < i)
+                ++indicesIndex;
+            if (indicesIndex < indices.size() && indices[indicesIndex] == i)
+                continue;
+        }
         newItems.emplace_back(std::move(items_[i]));
     }
-    items_ = newItems;
+    items_ = std::move(newItems);
 }
