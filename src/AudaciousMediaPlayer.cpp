@@ -38,6 +38,7 @@
 # include <string>
 # include <chrono>
 # include <thread>
+# include <iostream>
 
 
 namespace
@@ -258,20 +259,39 @@ void MediaPlayer::Impl::finishPlayerProcess()
     if (isRunning()) {
         const bool blocked = playerProcess_.blockSignals(true);
 
-        constexpr int waitingTime = 5;
-        int timeSpent = - waitingTime;
+        constexpr int startCheckingAt = 30, considerQuitAt = 40,
+                      quitInterval = considerQuitAt - startCheckingAt,
+                      forceQuitAt = 100;
+        int loopCount = 0;
+        int playerIsNotRunningSince = forceQuitAt;
+
         do {
             execute(Audtool::shutdownCommand);
-            timeSpent += waitingTime;
-            if (timeSpent > 300 && ! Audtool::isAudaciousRunning()) {
+
+            ++loopCount;
+            if (loopCount == forceQuitAt) {
+                std::cerr << "** VenturousCore CRITICAL ** " +
+                          Audacious::playerName +
+                          " is not responding. Killing the process..."
+                          << std::endl;
+                playerProcess_.kill();
+                break;
+            }
+            if (loopCount >= considerQuitAt &&
+                    loopCount - playerIsNotRunningSince >= quitInterval) {
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
                 std::cout << "Failed to finish player process properly."
                           " It seems to be in erroneous state." << std::endl;
 # endif
                 break;
             }
+            if (loopCount >= startCheckingAt &&
+                    playerIsNotRunningSince > loopCount &&
+                    ! Audtool::isAudaciousRunning()) {
+                playerIsNotRunningSince = loopCount;
+            }
         }
-        while (! playerProcess_.waitForFinished(waitingTime));
+        while (! playerProcess_.waitForFinished(5));
 
         playerProcess_.blockSignals(blocked);
     }

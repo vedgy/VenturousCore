@@ -47,7 +47,7 @@ public:
     FinishedSlot;
     /// This type is used for external function, which is called after
     /// external process error happens.
-    /// @param errorMessage Message, which describes error, suitable for
+    /// @param errorMessage Message that describes error, suitable for
     /// displaying to user.
     typedef std::function<void(std::string errorMessage)> ErrorSlot;
 
