@@ -33,6 +33,7 @@
 
 # include <cstddef>
 # include <utility>
+# include <array>
 # include <vector>
 # include <string>
 # include <chrono>
@@ -175,6 +176,7 @@ public:
     void quit();
 
     FinishedSlot finished_ { [](bool, int, std::vector<std::string>) {} };
+    ErrorSlot error_ { [](std::string) {} };
     bool autoSetOptions_ = true;
 
 private:
@@ -183,6 +185,8 @@ private:
     /// @brief Ensures that unmanaged Audacious process is not running if
     /// (! isRunning()).
     void quitUnmanagedAudaciousProcess();
+    /// @brief Calls setRecommendedOptions().
+    void timerEvent(QTimerEvent *) override;
 
 
     QProcess playerProcess_;
@@ -194,8 +198,8 @@ private:
 private slots:
     /// @brief Calls finished_.
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    /// @brief Calls setAudtoolOptions().
-    void timerEvent(QTimerEvent *) override;
+    /// @brief Calls error_.
+    void onError(QProcess::ProcessError error);
 };
 
 
@@ -203,6 +207,8 @@ MediaPlayer::Impl::Impl(): QObject()
 {
     connect(& playerProcess_, SIGNAL(finished(int, QProcess::ExitStatus)),
             SLOT(onFinished(int, QProcess::ExitStatus)));
+    connect(& playerProcess_, SIGNAL(error(QProcess::ProcessError)),
+            SLOT(onError(QProcess::ProcessError)));
 }
 
 bool MediaPlayer::Impl::isRunning() const
@@ -215,8 +221,13 @@ void MediaPlayer::Impl::start(const QStringList & arguments)
     /// If Audacious is already running with proper arguments (isRunning())
     /// AND is ready to accept commands (Audtool::isAudaciousRunning()), there
     /// is no need to restart it.
-    if (isRunning() && Audtool::isAudaciousRunning())
+    if (isRunning() && Audtool::isAudaciousRunning()) {
+# ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
+        std::cout << Audacious::playerName << " was running when starting "
+                  "playback was requested." << std::endl;
+# endif
         QProcess::execute(Audacious::commandName, arguments);
+    }
     else {
         quit();
         playerProcess_.start(Audacious::commandName, arguments);
@@ -247,10 +258,20 @@ void MediaPlayer::Impl::finishPlayerProcess()
     if (isRunning()) {
         const bool blocked = playerProcess_.blockSignals(true);
 
+        constexpr int waitingTime = 5;
+        int timeSpent = - waitingTime;
         do {
             execute(Audtool::shutdownCommand);
+            timeSpent += waitingTime;
+            if (timeSpent > 300 && ! Audtool::isAudaciousRunning()) {
+# ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
+                std::cout << "Failed to finish player process properly."
+                          " It seems to be in erroneous state." << std::endl;
+# endif
+                break;
+            }
         }
-        while (! playerProcess_.waitForFinished(5));
+        while (! playerProcess_.waitForFinished(waitingTime));
 
         playerProcess_.blockSignals(blocked);
     }
@@ -264,6 +285,13 @@ void MediaPlayer::Impl::quitUnmanagedAudaciousProcess()
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
+}
+
+void MediaPlayer::Impl::timerEvent(QTimerEvent *)
+{
+    killTimer(timerId_);
+    timerId_ = 0;
+    Audtool::setRecommendedOptions();
 }
 
 
@@ -282,12 +310,37 @@ void MediaPlayer::Impl::onFinished(
     finished_(crashExit, exitCode, Audacious::analyzeErrors(errors));
 }
 
-
-void MediaPlayer::Impl::timerEvent(QTimerEvent *)
+void MediaPlayer::Impl::onError(QProcess::ProcessError error)
 {
-    killTimer(timerId_);
-    timerId_ = 0;
-    Audtool::setRecommendedOptions();
+    if (error == QProcess::Timedout)
+        return;
+    QString errorMessage;
+    switch (error) {
+        case QProcess::FailedToStart:
+            errorMessage = tr("the process failed to start. "
+                              "Either the invoked program is missing, "
+                              "or you may have insufficient permissions "
+                              "to invoke the program.");
+            break;
+        case QProcess::Crashed:
+            errorMessage = tr("the process crashed some time after "
+                              "starting successfully.");
+            break;
+        case QProcess::ReadError:
+            errorMessage = tr("an error occurred when attempting to "
+                              "read from the process.");
+            break;
+        case QProcess::WriteError:
+            errorMessage = tr("an error occurred when attempting to "
+                              "write to the process.");
+            break;
+        case QProcess::UnknownError:
+            errorMessage = tr("an unknown error occurred.");
+            break;
+        default:
+            errorMessage = tr("unexpected error has occured.");
+    }
+    error_(QtUtilities::qStringToString(errorMessage));
 }
 
 
@@ -312,6 +365,11 @@ bool MediaPlayer::isRunning() const
 void MediaPlayer::setFinishedSlot(FinishedSlot slot)
 {
     impl_->finished_ = std::move(slot);
+}
+
+void MediaPlayer::setErrorSlot(ErrorSlot slot)
+{
+    impl_->error_ = std::move(slot);
 }
 
 void MediaPlayer::start()

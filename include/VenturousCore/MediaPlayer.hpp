@@ -45,6 +45,11 @@ public:
     typedef std::function < void(bool crashExit, int exitCode,
                                  std::vector<std::string> missingFilesAndDirs) >
     FinishedSlot;
+    /// This type is used for external function, which is called after
+    /// external process error happens.
+    /// @param errorMessage Message, which describes error, suitable for
+    /// displaying to user.
+    typedef std::function<void(std::string errorMessage)> ErrorSlot;
 
     /// @return Name of the external player.
     static std::string playerName();
@@ -60,8 +65,10 @@ public:
     /// instance of MediaPlayer is running.
     bool isRunning() const;
 
-    /// @brief Replaces current slot with specified value.
+    /// @brief Replaces current finishedSlot with specified value.
     void setFinishedSlot(FinishedSlot slot);
+    /// @brief Replaces current errorSlot with specified value.
+    void setErrorSlot(ErrorSlot slot);
 
     /// @brief If (isRunning() == true) does nothing. Otherwise, starts
     /// (or restarts) external player.
