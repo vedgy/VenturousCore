@@ -194,7 +194,7 @@ private:
     /// Timer is used for auto-setting options. It is necessary, because
     /// Audacious is not ready to accept audtool commands immediately after
     /// start.
-    int timerId_;
+    int timerId_ = 0;
 
 private slots:
     /// @brief Calls finished_.
