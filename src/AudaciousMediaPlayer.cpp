@@ -29,6 +29,7 @@
 # include <QString>
 # include <QStringList>
 # include <QObject>
+# include <QTimer>
 # include <QProcess>
 
 # include <cstddef>
@@ -118,7 +119,7 @@ const QString commandName = "audtool",
               shutdownCommand = commandName + " shutdown";
 const QString on = "on\n", off = "off\n";
 
-/// @return true If Audacious is running, false otherwise.
+/// @return true if Audacious is running, false otherwise.
 bool isAudaciousRunning()
 {
     return ! executeAndGetOutput(commandName + " version").isEmpty();
@@ -154,6 +155,11 @@ void setRecommendedOptions()
     }
 }
 
+void setMainWindowVisible(bool visible)
+{
+    execute(commandName + " mainwin-show " + (visible ? "on" : "off"));
+}
+
 }
 
 }
@@ -167,7 +173,7 @@ public:
 
     ~Impl() { finishPlayerProcess(); }
 
-    /// @brief Returns true if this Impl controls external player process.
+    /// @return true if this Impl controls external player process.
     bool isRunning() const;
 
     /// @brief Starts player with specified arguments list.
@@ -179,6 +185,7 @@ public:
     FinishedSlot finished_ { [](bool, int, std::vector<std::string>) {} };
     ErrorSlot error_ { [](std::string) {} };
     bool autoSetOptions_ = true;
+    bool autoHideWindow_ = false;
 
 private:
     /// @brief Gracefully finishes playerProcess_ if isRunning().
@@ -191,16 +198,17 @@ private:
 
 
     QProcess playerProcess_;
-    /// Timer is used for auto-setting options. It is necessary, because
-    /// Audacious is not ready to accept audtool commands immediately after
-    /// start.
-    int timerId_ = 0;
+    /// Timers are necessary because Audacious is not ready to accept audtool
+    /// commands immediately after start.
+    int setOptionsTimerId_ = 0;
+    QTimer hideWindowTimer_;
 
 private slots:
     /// @brief Calls finished_.
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
     /// @brief Calls error_.
     void onError(QProcess::ProcessError error);
+    void onHideWindowTimeout();
 };
 
 
@@ -210,6 +218,7 @@ MediaPlayer::Impl::Impl(): QObject()
             SLOT(onFinished(int, QProcess::ExitStatus)));
     connect(& playerProcess_, SIGNAL(error(QProcess::ProcessError)),
             SLOT(onError(QProcess::ProcessError)));
+    connect(& hideWindowTimer_, SIGNAL(timeout()), SLOT(onHideWindowTimeout()));
 }
 
 bool MediaPlayer::Impl::isRunning() const
@@ -234,17 +243,20 @@ void MediaPlayer::Impl::start(const QStringList & arguments)
         playerProcess_.start(Audacious::commandName, arguments);
     }
 
-    if (autoSetOptions_) {
-        killTimer(timerId_);
-        timerId_ = startTimer(3000);
-    }
-
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
     std::cout << QtUtilities::qStringToString(Audacious::commandName);
     for (const QString & arg : arguments)
         std::cout << " \"" << QtUtilities::qStringToString(arg) << '"';
     std::cout << std::endl;
 # endif
+
+    if (autoSetOptions_) {
+        killTimer(setOptionsTimerId_);
+        setOptionsTimerId_ = startTimer(3000);
+    }
+
+    if (autoHideWindow_)
+        hideWindowTimer_.start(10);
 }
 
 void MediaPlayer::Impl::quit()
@@ -309,8 +321,8 @@ void MediaPlayer::Impl::quitUnmanagedAudaciousProcess()
 
 void MediaPlayer::Impl::timerEvent(QTimerEvent *)
 {
-    killTimer(timerId_);
-    timerId_ = 0;
+    killTimer(setOptionsTimerId_);
+    setOptionsTimerId_ = 0;
     Audtool::setRecommendedOptions();
 }
 
@@ -363,11 +375,29 @@ void MediaPlayer::Impl::onError(QProcess::ProcessError error)
     error_(QtUtilities::qStringToString(errorMessage));
 }
 
+void MediaPlayer::Impl::onHideWindowTimeout()
+{
+    if (Audtool::isAudaciousRunning()) {
+        hideWindowTimer_.stop();
+        Audtool::setMainWindowVisible(false);
+    }
+}
+
 
 
 std::string MediaPlayer::playerName()
 {
     return Audacious::playerName;
+}
+
+void MediaPlayer::setRecommendedOptions()
+{
+    Audtool::setRecommendedOptions();
+}
+
+void MediaPlayer::setPlayerWindowVisible(const bool visible)
+{
+    Audtool::setMainWindowVisible(visible);
 }
 
 
@@ -415,11 +445,6 @@ void MediaPlayer::start(const std::vector<std::string> & pathsToItems)
     impl_->start(arguments);
 }
 
-void MediaPlayer::setRecommendedOptions()
-{
-    Audtool::setRecommendedOptions();
-}
-
 bool MediaPlayer::getAutoSetOptions() const
 {
     return impl_->autoSetOptions_;
@@ -428,6 +453,16 @@ bool MediaPlayer::getAutoSetOptions() const
 void MediaPlayer::setAutoSetOptions(const bool autoSetOptions)
 {
     impl_->autoSetOptions_ = autoSetOptions;
+}
+
+bool MediaPlayer::getAutoHideWindow() const
+{
+    return impl_->autoHideWindow_;
+}
+
+void MediaPlayer::setAutoHideWindow(const bool autoHide)
+{
+    impl_->autoHideWindow_ = autoHide;
 }
 
 void MediaPlayer::quit()

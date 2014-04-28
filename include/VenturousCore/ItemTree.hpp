@@ -264,11 +264,11 @@ public:
     /// @brief Constructs random engine using parameter value as a seed.
     explicit RandomItemChooser(Seed seed);
 
-    /// @brief Returns random itemId in the tree.
+    /// @return Random itemId in the tree.
     /// @throw Error If there are no Items in the tree.
     int randomItemId(const Tree & tree);
 
-    /// @brief Returns absolute path to next random Item in the tree.
+    /// @return Absolute path to next random Item in the tree.
     /// @throw Error If there are no Items in the tree.
     std::string randomPath(const Tree & tree) {
         return tree.getItemAbsolutePath(randomItemId(tree));

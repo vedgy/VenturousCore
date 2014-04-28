@@ -54,6 +54,15 @@ public:
     /// @return Name of the external player.
     static std::string playerName();
 
+    /// @brief Sets recommended external player options. Should be called while
+    /// external player is running. Otherwise, may have no effect.
+    static void setRecommendedOptions();
+
+    /// @brief Shows / hides external player window. Should be called while
+    /// external player is running. Otherwise, may have no effect.
+    static void setPlayerWindowVisible(bool visible);
+
+
     /// @brief Performs quick initialization.
     /// Does not start media player process.
     explicit MediaPlayer();
@@ -61,7 +70,7 @@ public:
     /// @brief Ensures that external player quits gracefully if isRunning().
     ~MediaPlayer();
 
-    /// @brief Returns true if player process that was started by this
+    /// @return true if player process that was started by this
     /// instance of MediaPlayer is running.
     bool isRunning() const;
 
@@ -83,10 +92,6 @@ public:
     /// @param pathsToItems Absolute paths to playable items.
     void start(const std::vector<std::string> & pathsToItems);
 
-    /// @brief Sets recommended external player options. Should be called while
-    /// external player is running. Otherwise, may have no effect.
-    void setRecommendedOptions();
-
     /// @brief If AutoSetOptions property is set to true [default], recommended
     /// player options are set each time start() is called. This ensures that
     /// correct options are in use even if user manually changed them before.
@@ -97,6 +102,14 @@ public:
     bool getAutoSetOptions() const;
     /// @param autoSet Desired AutoSetOptions value.
     void setAutoSetOptions(bool autoSet);
+
+    /// @brief If AutoHideWindow property is set to true, external player
+    /// window is hidden each time start() is called.
+
+    /// @return Current AutoHideWindow value.
+    bool getAutoHideWindow() const;
+    /// @param autoHide Desired AutoHideWindow value.
+    void setAutoHideWindow(bool autoHide);
 
     /// @brief Blocks FinishedSlot and quits external player.
     /// If external player is not running, call has no effect.
