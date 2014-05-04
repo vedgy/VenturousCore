@@ -439,6 +439,7 @@ void MediaPlayer::start(const std::string & pathToItem)
 void MediaPlayer::start(const std::vector<std::string> & pathsToItems)
 {
     QStringList arguments = Audacious::arguments;
+    arguments.reserve(arguments.size() + 1 + int(pathsToItems.size()));
     arguments << Audacious::addToTemporaryPlaylistArg;
     for (const std::string & path : pathsToItems)
         arguments << QtUtilities::toQString(path);
