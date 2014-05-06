@@ -145,7 +145,7 @@ void setStatus(const QString & optionName, const QString & desiredStatus)
         execute(baseCommand + "-toggle");
 }
 
-void setRecommendedOptions()
+void setEssentialOptions()
 {
     if (isAudaciousRunning()) {
         setStatus("auto-advance", on);
@@ -193,7 +193,7 @@ private:
     /// @brief Ensures that unmanaged Audacious process is not running if
     /// (! isRunning()).
     void quitUnmanagedAudaciousProcess();
-    /// @brief Calls setRecommendedOptions().
+    /// @brief Calls setEssentialOptions().
     void timerEvent(QTimerEvent *) override;
 
 
@@ -323,7 +323,7 @@ void MediaPlayer::Impl::timerEvent(QTimerEvent *)
 {
     killTimer(setOptionsTimerId_);
     setOptionsTimerId_ = 0;
-    Audtool::setRecommendedOptions();
+    Audtool::setEssentialOptions();
 }
 
 
@@ -390,9 +390,9 @@ std::string MediaPlayer::playerName()
     return Audacious::playerName;
 }
 
-void MediaPlayer::setRecommendedOptions()
+void MediaPlayer::setEssentialOptions()
 {
-    Audtool::setRecommendedOptions();
+    Audtool::setEssentialOptions();
 }
 
 void MediaPlayer::setPlayerWindowVisible(const bool visible)

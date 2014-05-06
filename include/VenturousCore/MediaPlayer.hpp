@@ -54,9 +54,9 @@ public:
     /// @return Name of the external player.
     static std::string playerName();
 
-    /// @brief Sets recommended external player options. Should be called while
+    /// @brief Sets essential external player options. Should be called while
     /// external player is running. Otherwise, may have no effect.
-    static void setRecommendedOptions();
+    static void setEssentialOptions();
 
     /// @brief Shows / hides external player window. Should be called while
     /// external player is running. Otherwise, may have no effect.
@@ -92,7 +92,7 @@ public:
     /// @param pathsToItems Absolute paths to playable items.
     void start(const std::vector<std::string> & pathsToItems);
 
-    /// @brief If AutoSetOptions property is set to true [default], recommended
+    /// @brief If AutoSetOptions property is set to true [default], essential
     /// player options are set each time start() is called. This ensures that
     /// correct options are in use even if user manually changed them before.
     /// However if user wants manual options handling or never changes them and
