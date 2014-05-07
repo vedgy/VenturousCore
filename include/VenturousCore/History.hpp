@@ -65,7 +65,7 @@ public:
     void push(std::string entry);
 
     /// @brief Removes specified indices from the history.
-    /// @param indices Collection of indices, which may be not sorted, but must
+    /// @param indices Collection of indices, which may be not sorted but must
     /// not contain duplicates.
     /// @throw Error If at least one index is bigger or equal to items().size().
     void remove(std::vector<std::size_t> indices);

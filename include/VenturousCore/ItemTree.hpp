@@ -279,7 +279,7 @@ private:
 
     /// NOTE: distribution bounds are determined by tree.itemCount(), which is
     /// not expected to change often. So the distribution is cached.
-    /// Primary reason for caching is not performance, but possible dependency
+    /// Primary reason for caching is not performance but possible dependency
     /// between subsequent values, so for some Distribution implementation
     /// caching might lead to better randomness.
     Distribution distribution_ { 0, 0 };

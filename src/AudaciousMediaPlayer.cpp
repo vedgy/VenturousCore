@@ -330,7 +330,8 @@ void MediaPlayer::Impl::timerEvent(QTimerEvent *)
 void MediaPlayer::Impl::onFinished(
     const int exitCode, const QProcess::ExitStatus exitStatus)
 {
-    const std::string errors = playerProcess_.readAllStandardError().data();
+    const std::string errors =
+        playerProcess_.readAllStandardError().constData();
     const bool crashExit = (exitStatus == QProcess::CrashExit);
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
