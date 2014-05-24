@@ -62,12 +62,15 @@ void print(std::ostream & os, const Node & node, int indent = 0)
         print(os, child, indent);
 }
 
-std::string getInvalidStateMessage(const std::string & name)
+std::string invalidStateMessage(const std::string & name)
 {
-    return "Node " + name + " is invalid.";
+    return "node \"" + name + "\" is invalid.";
 }
 
-const std::string wrongFileFormatMessage = "wrong file format.";
+std::string wrongFileFormatMessage()
+{
+    return "wrong file format.";
+}
 
 }
 
@@ -196,19 +199,19 @@ void Node::validate() const
         return;
     if (! std::is_sorted(children_.cbegin(), children_.cend(),
                          CompNodesByName())) {
-        throw Error(getInvalidStateMessage(name_) + " Children are not sorted "
+        throw Error(invalidStateMessage(name_) + " Children are not sorted "
                     "properly.");
     }
     {
         auto it = std::adjacent_find(children_.cbegin(), children_.cend(),
                                      EqualNodeNames());
         if (it != children_.cend()) {
-            throw Error(getInvalidStateMessage(name_) +
+            throw Error(invalidStateMessage(name_) +
                         " Duplicate children with name \"" + it->name_ + "\".");
         }
     }
     if (children_.front().name_.empty())
-        throw Error(getInvalidStateMessage(name_) + " Child with empty name.");
+        throw Error(invalidStateMessage(name_) + " Child with empty name.");
 
     std::for_each(children_.cbegin(), children().cend(),
                   std::bind(& Node::validate, std::placeholders::_1));
@@ -239,9 +242,9 @@ std::string Tree::load(const std::string & filename)
             break;
         }
         if (indent == line.size() - 1)
-            return wrongFileFormatMessage + " Empty name.";
+            return wrongFileFormatMessage() + " Empty name.";
         if (indent > nodeStack.size() - 1)
-            return wrongFileFormatMessage + " Unexpectedly large indent.";
+            return wrongFileFormatMessage() + " Unexpectedly large indent.";
 
         // Node's level is determined by indent.
         nodeStack.erase(nodeStack.begin() + 1 + indent, nodeStack.end());
@@ -258,13 +261,13 @@ std::string Tree::load(const std::string & filename)
         try {
             validate();
         }
-        catch (Error & e) {
+        catch (const Error & e) {
             return e.what();
         }
         return std::string();
     }
     else
-        return "reading file failed.";
+        return "reading file \"" + filename + "\" failed.";
 }
 
 bool Tree::save(const std::string & filename) const

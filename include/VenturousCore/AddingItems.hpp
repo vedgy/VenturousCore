@@ -30,18 +30,34 @@ class Tree;
 
 namespace AddingItems
 {
-/// For example: "*.cue".
-extern const QStringList allMetaDataPatterns;
-/// For example: "*.flac".
-extern const QStringList allAudioPatterns;
+inline const QStringList & allMetaDataPatterns()
+{
+    static const QStringList l { "*.cue" };
+    return l;
+}
 
+inline const QStringList & allAudioPatterns()
+{
+    static const QStringList l {
+        "*.mp3",
+        "*.m4a", "*.m4b", "*.m4p", "*.m4v", "*.m4r", "*.3gp", "*.mp4", "*.aac",
+        "*.ogg", "*.oga",
+        "*.flac",
+        "*.wv",
+        "*.shn",
+        "*.mpc", "*.mp+", "*.mpp",
+        "*.tta",
+        "*.wma"
+    };
+    return l;
+}
 
 struct Policy {
     /// Files that match filePatterns can be added as items in itemTree.
-    QStringList filePatterns = allMetaDataPatterns;
+    QStringList filePatterns = allMetaDataPatterns();
     /// Directory is considered to be media dir if it contains (as direct
     /// children!) files that match mediaDirFilePatterns.
-    QStringList mediaDirFilePatterns = allAudioPatterns;
+    QStringList mediaDirFilePatterns = allAudioPatterns();
 
     /// If true, files that match filePatterns are inserted in itemTree.
     bool addFiles = true;

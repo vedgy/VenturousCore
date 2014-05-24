@@ -23,7 +23,7 @@
 
 # include "History.hpp"
 
-# include <TemplateUtilities/Miscellaneous.hpp>
+# include <CommonUtilities/Miscellaneous.hpp>
 
 # include <cstddef>
 # include <cassert>
@@ -58,7 +58,7 @@ bool History::load(const std::string & filename)
     while (items_.size() < maxSize_ && std::getline(is, line)) {
         const auto begin =
             std::find_if_not(line.begin(), line.end(),
-                             TemplateUtilities::safeCtype<std::isspace>);
+                             CommonUtilities::safeCtype<std::isspace>);
         // skipping lines without non-whitespace characters.
         if (begin != line.end()) {
             if (begin == line.begin())

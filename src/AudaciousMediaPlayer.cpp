@@ -473,6 +473,4 @@ void MediaPlayer::quit()
 }
 
 
-# ifdef INCLUDE_MOC
 # include "AudaciousMediaPlayer.moc"
-# endif

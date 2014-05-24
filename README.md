@@ -8,7 +8,7 @@ This library is used by Venturous - GUI random playback manager.
 It can also be used by command-line-interface playback manager.
 This library depends on QtCore library. Both Qt4 and Qt5 are supported.
 It also depends on vedgTools/CMakeModules, vedgTools/TemplateUtilities and
-vedgTools/QtCoreUtilities libraries, which are present as a submodules in this
+vedgTools/QtCoreUtilities libraries, which are present as submodules in this
 git repository (in `modules` directory).
 
 ## License

@@ -13,8 +13,9 @@ set(PATH_TO_VEDG_TOOLS ${PATH_TO_MODULES}/vedgTools)
 ## vedgTools/CMakeModules path boilerplate.
 include(vedgTools/CMakeLicense OPTIONAL RESULT_VARIABLE CMakeModulesWasIncluded)
 if(CMakeModulesWasIncluded STREQUAL NOTFOUND)
-    set(CMAKE_MODULE_PATH
-            "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/${PATH_TO_VEDG_TOOLS}/CMakeModules")
+    set(PATH_TO_CMAKE_MODULES
+            ${CMAKE_CURRENT_SOURCE_DIR}/${PATH_TO_VEDG_TOOLS}/CMakeModules)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PATH_TO_CMAKE_MODULES})
     message("Including CMakeModules.")
     include(vedgTools/CMakeLicense)
 endif()
@@ -31,18 +32,15 @@ message("DEBUG_VENTUROUS = " ${DEBUG_VENTUROUS})
 include(vedgTools/LibraryWithQtInit)
 
 
-set(PATH_TO_TEMPLATE_UTILITIES ${PATH_TO_VEDG_TOOLS}/TemplateUtilities)
-include(vedgTools/LibraryGetTemplateUtilitiesPublicHeaders)
-
 include(vedgTools/LibraryFindQt)
 libraryFindQt(Qt5Core . QTCORE)
 
+set(PATH_TO_TEMPLATE_UTILITIES ${PATH_TO_VEDG_TOOLS}/TemplateUtilities)
+include(vedgTools/LibraryGetTemplateUtilitiesPublicHeaders)
 set(PATH_TO_QT_CORE_UTILITIES ${PATH_TO_VEDG_TOOLS}/QtCoreUtilities)
 include(vedgTools/LibraryGetQtCoreUtilitiesPublicHeaders)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
-add_definitions(-DINCLUDE_MOC)
+include(vedgTools/EnableAutomoc)
 
 
 if(DEBUG_VENTUROUS)
@@ -56,6 +54,7 @@ endif()
 set(Sources_Path src)
 
 include_directories(
+    ${PATH_TO_CMAKE_MODULES}/include
     ${TemplateUtilities_PublicHeaders_Path}
     ${QtCoreUtilities_PublicHeaders_Path}
     ${${Target_Name}_PublicHeaders_Path}

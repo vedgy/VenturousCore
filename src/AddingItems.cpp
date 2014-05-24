@@ -39,22 +39,6 @@
 
 namespace AddingItems
 {
-const QStringList allMetaDataPatterns { "*.cue" };
-
-const QStringList allAudioPatterns
-{
-    "*.mp3",
-    "*.m4a", "*.m4b", "*.m4p", "*.m4v", "*.m4r", "*.3gp", "*.mp4", "*.aac",
-    "*.ogg", "*.oga",
-    "*.flac",
-    "*.wv",
-    "*.shn",
-    "*.mpc", "*.mp+", "*.mpp",
-    "*.tta",
-    "*.wma"
-};
-
-
 bool operator == (const Policy & lhs, const Policy & rhs)
 {
     return lhs.filePatterns == rhs.filePatterns &&

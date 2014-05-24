@@ -55,11 +55,11 @@ public:
     static std::string playerName();
 
     /// @brief Sets essential external player options. Should be called while
-    /// external player is running. Otherwise, may have no effect.
+    /// external player is running; otherwise may have no effect.
     static void setEssentialOptions();
 
     /// @brief Shows / hides external player window. Should be called while
-    /// external player is running. Otherwise, may have no effect.
+    /// external player is running; otherwise may have no effect.
     static void setPlayerWindowVisible(bool visible);
 
 
@@ -79,7 +79,7 @@ public:
     /// @brief Replaces current errorSlot with specified value.
     void setErrorSlot(ErrorSlot slot);
 
-    /// @brief If (isRunning() == true) does nothing. Otherwise, starts
+    /// @brief If (isRunning() == true) does nothing; otherwise starts
     /// (or restarts) external player.
     /// Playback of current external player's playlist will be started.
     void start();
