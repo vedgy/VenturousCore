@@ -34,8 +34,10 @@
 
 # include <cstddef>
 # include <utility>
+# include <algorithm>
 # include <array>
 # include <vector>
+# include <set>
 # include <string>
 # include <chrono>
 # include <thread>
@@ -66,7 +68,7 @@ namespace Audacious
 const std::string playerName = "Audacious",
                   /// These 2 strings must match Audacious error message format.
                   missingFilesAndDirsStart = "Cannot open ",
-                  missingFilesAndDirsEnd = ": No such file or directory.";
+                  missingFilesAndDirsEnd = ": No such file or directory";
 
 const QString commandName = "audacious";
 
@@ -80,22 +82,36 @@ const QString addToTemporaryPlaylistArg = "-E";
 std::vector<std::string> analyzeErrors(const std::string & errors)
 {
     std::vector<std::string> missingFilesAndDirs;
-    std::size_t end = 0;
+    std::set<std::string> encounteredNames;
+    std::size_t prevEnd = 0;
     while (true) {
-        std::size_t start = errors.find(missingFilesAndDirsStart, end);
-        if (start == std::string::npos)
-            break;
-        start += missingFilesAndDirsStart.size();
-
-        end = errors.find(missingFilesAndDirsEnd, start);
+        const std::size_t end = errors.find(missingFilesAndDirsEnd, prevEnd);
         if (end == std::string::npos)
-            throw MediaPlayer::Error("unexpected Audacious stderr format.");
+            break;
+        std::size_t start;
+        {
+            // Set {start} to the position just after last '\n' character in
+            // interval [prevEnd, end).
+            const auto rEnd = errors.rend();
+            start = rEnd - std::find(rEnd - end, rEnd - prevEnd, '\n');
+            if (start == prevEnd && start != 0) { // not found
+                std::cerr << VENTUROUS_CORE_ERROR_PREFIX "Unexpected "
+                          << playerName << " stderr format. Aborted parsing."
+                          << std::endl;
+                return missingFilesAndDirs;
+            }
+        }
+        if (errors.compare(start, missingFilesAndDirsStart.size(),
+                           missingFilesAndDirsStart) == 0) {
+            // If error prefix is present, skip it.
+            start += missingFilesAndDirsStart.size();
+        }
         const std::string item = errors.substr(start, end - start);
-        end += missingFilesAndDirsEnd.size();
+        prevEnd = end + missingFilesAndDirsEnd.size();
 
         // Audacious duplicates messages sometimes, so this check prevents
         // reporting the same missing item twice.
-        if (missingFilesAndDirs.empty() || missingFilesAndDirs.back() != item)
+        if (encounteredNames.insert(item).second)
             missingFilesAndDirs.emplace_back(item);
     }
 
@@ -170,14 +186,15 @@ class MediaPlayer::Impl : public QObject
     Q_OBJECT
 public:
     explicit Impl();
-
-    ~Impl() { finishPlayerProcess(); }
+    ~Impl();
 
     /// @return true if this Impl controls external player process.
     bool isRunning() const;
 
     /// @brief Starts player with specified arguments list.
-    void start(const QStringList & arguments);
+    /// @return false if player has failed to start or quitted immediatelly;
+    /// true otherwise.
+    bool start(const QStringList & arguments);
 
     /// @brief Quits Audacious.
     void quit();
@@ -190,11 +207,10 @@ public:
 private:
     /// @brief Gracefully finishes playerProcess_ if isRunning().
     void finishPlayerProcess();
-    /// @brief Ensures that unmanaged Audacious process is not running if
-    /// (! isRunning()).
-    void quitUnmanagedAudaciousProcess();
     /// @brief Calls setEssentialOptions().
     void timerEvent(QTimerEvent *) override;
+    /// @brief Stops all active timers.
+    void stopTimers();
 
 
     QProcess playerProcess_;
@@ -221,12 +237,18 @@ MediaPlayer::Impl::Impl(): QObject()
     connect(& hideWindowTimer_, SIGNAL(timeout()), SLOT(onHideWindowTimeout()));
 }
 
+MediaPlayer::Impl::~Impl()
+{
+    playerProcess_.blockSignals(true);
+    finishPlayerProcess();
+}
+
 bool MediaPlayer::Impl::isRunning() const
 {
     return playerProcess_.state() != QProcess::NotRunning;
 }
 
-void MediaPlayer::Impl::start(const QStringList & arguments)
+bool MediaPlayer::Impl::start(const QStringList & arguments)
 {
     /// If Audacious is already running with proper arguments (isRunning())
     /// AND is ready to accept commands (Audtool::isAudaciousRunning()), there
@@ -241,6 +263,16 @@ void MediaPlayer::Impl::start(const QStringList & arguments)
     else {
         quit();
         playerProcess_.start(Audacious::commandName, arguments);
+
+        if (isRunning()) {
+            if (autoSetOptions_) {
+                killTimer(setOptionsTimerId_);
+                setOptionsTimerId_ = startTimer(3000);
+            }
+
+            if (autoHideWindow_)
+                hideWindowTimer_.start(10);
+        }
     }
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
@@ -250,24 +282,23 @@ void MediaPlayer::Impl::start(const QStringList & arguments)
     std::cout << std::endl;
 # endif
 
-    if (autoSetOptions_) {
-        killTimer(setOptionsTimerId_);
-        setOptionsTimerId_ = startTimer(3000);
-    }
-
-    if (autoHideWindow_)
-        hideWindowTimer_.start(10);
+    return isRunning();
 }
 
 void MediaPlayer::Impl::quit()
 {
     finishPlayerProcess();
-    quitUnmanagedAudaciousProcess();
+    while (Audtool::isAudaciousRunning()) {
+        execute(Audtool::shutdownCommand);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
 }
 
 
 void MediaPlayer::Impl::finishPlayerProcess()
 {
+    stopTimers();
+
     if (isRunning()) {
         const bool blocked = playerProcess_.blockSignals(true);
 
@@ -282,9 +313,9 @@ void MediaPlayer::Impl::finishPlayerProcess()
 
             ++loopCount;
             if (loopCount == forceQuitAt) {
-                std::cerr << "** VenturousCore CRITICAL ** " +
-                          Audacious::playerName +
-                          " is not responding. Killing the process..."
+                std::cerr << VENTUROUS_CORE_ERROR_PREFIX
+                          << Audacious::playerName
+                          << " is not responding. Killing the process..."
                           << std::endl;
                 playerProcess_.kill();
                 break;
@@ -309,16 +340,6 @@ void MediaPlayer::Impl::finishPlayerProcess()
     }
 }
 
-void MediaPlayer::Impl::quitUnmanagedAudaciousProcess()
-{
-    if (! isRunning()) {
-        while (Audtool::isAudaciousRunning()) {
-            execute(Audtool::shutdownCommand);
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-    }
-}
-
 void MediaPlayer::Impl::timerEvent(QTimerEvent *)
 {
     killTimer(setOptionsTimerId_);
@@ -326,10 +347,21 @@ void MediaPlayer::Impl::timerEvent(QTimerEvent *)
     Audtool::setEssentialOptions();
 }
 
+void MediaPlayer::Impl::stopTimers()
+{
+    if (setOptionsTimerId_ != 0) {
+        killTimer(setOptionsTimerId_);
+        setOptionsTimerId_ = 0;
+    }
+    hideWindowTimer_.stop();
+}
+
 
 void MediaPlayer::Impl::onFinished(
     const int exitCode, const QProcess::ExitStatus exitStatus)
 {
+    stopTimers();
+
     const std::string errors =
         playerProcess_.readAllStandardError().constData();
     const bool crashExit = (exitStatus == QProcess::CrashExit);
@@ -347,6 +379,8 @@ void MediaPlayer::Impl::onError(QProcess::ProcessError error)
 {
     if (error == QProcess::Timedout)
         return;
+    stopTimers();
+
     QString errorMessage;
     switch (error) {
         case QProcess::FailedToStart:
@@ -423,28 +457,29 @@ void MediaPlayer::setErrorSlot(ErrorSlot slot)
     impl_->error_ = std::move(slot);
 }
 
-void MediaPlayer::start()
+bool MediaPlayer::start()
 {
-    if (! impl_->isRunning())
-        impl_->start(Audacious::arguments);
+    if (impl_->isRunning())
+        return true;
+    return impl_->start(Audacious::arguments);
 }
 
-void MediaPlayer::start(const std::string & pathToItem)
+bool MediaPlayer::start(const std::string & pathToItem)
 {
-    impl_->start(Audacious::arguments +
-                 QStringList { Audacious::addToTemporaryPlaylistArg,
-                               QtUtilities::toQString(pathToItem)
-                             });
+    return impl_->start(Audacious::arguments +
+                        QStringList { Audacious::addToTemporaryPlaylistArg,
+                                      QtUtilities::toQString(pathToItem)
+                                    });
 }
 
-void MediaPlayer::start(const std::vector<std::string> & pathsToItems)
+bool MediaPlayer::start(const std::vector<std::string> & pathsToItems)
 {
     QStringList arguments = Audacious::arguments;
     arguments.reserve(arguments.size() + 1 + int(pathsToItems.size()));
     arguments << Audacious::addToTemporaryPlaylistArg;
     for (const std::string & path : pathsToItems)
         arguments << QtUtilities::toQString(path);
-    impl_->start(arguments);
+    return impl_->start(arguments);
 }
 
 bool MediaPlayer::getAutoSetOptions() const

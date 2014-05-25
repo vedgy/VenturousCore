@@ -22,19 +22,12 @@
 # include <functional>
 # include <vector>
 # include <string>
-# include <stdexcept>
 # include <memory>
 
 
 class MediaPlayer
 {
 public:
-    class Error : public std::runtime_error
-    {
-    public:
-        explicit Error(const std::string & sWhat) : std::runtime_error(sWhat) {}
-    };
-
     /// This type is used for external function, which is called after task is
     /// finished.
     /// @param crashExit True if external player crashed.
@@ -58,7 +51,7 @@ public:
     /// external player is running; otherwise may have no effect.
     static void setEssentialOptions();
 
-    /// @brief Shows / hides external player window. Should be called while
+    /// @brief Shows/hides external player window. Should be called while
     /// external player is running; otherwise may have no effect.
     static void setPlayerWindowVisible(bool visible);
 
@@ -82,15 +75,19 @@ public:
     /// @brief If (isRunning() == true) does nothing; otherwise starts
     /// (or restarts) external player.
     /// Playback of current external player's playlist will be started.
-    void start();
+    /// @return false if player has failed to start or quitted immediatelly;
+    /// true otherwise.
+    bool start();
 
     /// @brief Starts player with specified path to item.
     /// @param pathToItem Absolute path to playable item.
-    void start(const std::string & pathToItem);
+    /// @return The same as start() without arguments.
+    bool start(const std::string & pathToItem);
 
     /// @brief Starts player with specified paths to items.
     /// @param pathsToItems Absolute paths to playable items.
-    void start(const std::vector<std::string> & pathsToItems);
+    /// @return The same as start() without arguments.
+    bool start(const std::vector<std::string> & pathsToItems);
 
     /// @brief If AutoSetOptions property is set to true [default], essential
     /// player options are set each time start() is called. This ensures that

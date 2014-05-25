@@ -50,6 +50,8 @@ if(DEBUG_VENTUROUS)
     )
 endif()
 
+include(vedgTools/AddErrorPrefixDefinition)
+
 
 set(Sources_Path src)
 
