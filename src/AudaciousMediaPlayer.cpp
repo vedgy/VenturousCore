@@ -66,9 +66,12 @@ QString executeAndGetOutput(const QString & command)
 namespace Audacious
 {
 const std::string playerName = "Audacious",
-                  /// These 2 strings must match Audacious error message format.
+                  /// The following strings must match Audacious error message
+                  /// format.
                   missingFilesAndDirsStart = "Cannot open ",
-                  missingFilesAndDirsEnd = ": No such file or directory";
+                  missingFilesAndDirsEnd = ": No such file or directory",
+                  errorStart = " *** ERROR:",
+                  libcueFile = "libcue.so";
 
 const QString commandName = "audacious";
 
@@ -77,11 +80,22 @@ const QStringList arguments { "-p", "-q" };
 
 const QString addToTemporaryPlaylistArg = "-E";
 
-/// @param errors Audacious stderr.
-/// @return Missing files and directories collection.
-std::vector<std::string> analyzeErrors(const std::string & errors)
+bool equalSubstr(const std::string & lhs, std::size_t lhsPos,
+                 const std::string & rhs)
 {
+    return lhs.compare(lhsPos, rhs.size(), rhs) == 0;
+}
+
+struct StderrInfo {
+    std::string errorMessage;
     std::vector<std::string> missingFilesAndDirs;
+};
+
+/// @param errors Audacious stderr.
+/// @return StderrInfo with information from errors.
+StderrInfo analyzeErrors(const std::string & errors)
+{
+    StderrInfo info;
     std::set<std::string> encounteredNames;
     std::size_t prevEnd = 0;
     while (true) {
@@ -98,33 +112,50 @@ std::vector<std::string> analyzeErrors(const std::string & errors)
                 std::cerr << VENTUROUS_CORE_ERROR_PREFIX "Unexpected "
                           << playerName << " stderr format. Aborted parsing."
                           << std::endl;
-                return missingFilesAndDirs;
+                return info;
             }
         }
-        if (errors.compare(start, missingFilesAndDirsStart.size(),
-                           missingFilesAndDirsStart) == 0) {
-            // If error prefix is present, skip it.
-            start += missingFilesAndDirsStart.size();
-        }
-        const std::string item = errors.substr(start, end - start);
-        prevEnd = end + missingFilesAndDirsEnd.size();
 
-        // Audacious duplicates messages sometimes, so this check prevents
-        // reporting the same missing item twice.
-        if (encounteredNames.insert(item).second)
-            missingFilesAndDirs.emplace_back(item);
+        if (equalSubstr(errors, start, errorStart)) {
+            if (info.errorMessage.empty()) {
+                const auto errorEnd = errors.begin() + end;
+                if (std::search(errors.begin() + start, errorEnd,
+                                libcueFile.begin(), libcueFile.end())
+                        != errorEnd) {
+                    info.errorMessage =
+                        QtUtilities::qStringToString(
+                            QObject::tr(
+                                "cue sheet support is not available in %1. "
+                                "<i>libcue</i> is most likely not installed."
+                            ).arg(QtUtilities::toQString(playerName)));
+                }
+            }
+        }
+        else {
+            if (equalSubstr(errors, start, missingFilesAndDirsStart)) {
+                // If error prefix is present, skip it.
+                start += missingFilesAndDirsStart.size();
+            }
+            std::string item = errors.substr(start, end - start);
+            // Audacious duplicates messages sometimes, so this check prevents
+            // reporting the same missing item twice.
+            if (encounteredNames.insert(item).second)
+                info.missingFilesAndDirs.emplace_back(std::move(item));
+        }
+
+        prevEnd = end + missingFilesAndDirsEnd.size();
     }
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
-    if (! missingFilesAndDirs.empty()) {
+    if (! info.missingFilesAndDirs.empty()) {
         std::cout << "Missing files and dirs:\n";
-        for (const std::string & s : missingFilesAndDirs)
+        for (const std::string & s : info.missingFilesAndDirs)
             std::cout << s << std::endl;
         std::cout << std::endl;
     }
 # endif
 
-    return missingFilesAndDirs;
+    return info;
 }
 
 }
@@ -220,7 +251,7 @@ private:
     QTimer hideWindowTimer_;
 
 private slots:
-    /// @brief Calls finished_.
+    /// @brief May call error_ and finished_.
     void onFinished(int exitCode, QProcess::ExitStatus exitStatus);
     /// @brief Calls error_.
     void onError(QProcess::ProcessError error);
@@ -372,7 +403,10 @@ void MediaPlayer::Impl::onFinished(
               << ". Errors:\n" << errors;
 # endif
 
-    finished_(crashExit, exitCode, Audacious::analyzeErrors(errors));
+    Audacious::StderrInfo info = Audacious::analyzeErrors(errors);
+    if (! info.errorMessage.empty())
+        error_(std::move(info.errorMessage));
+    finished_(crashExit, exitCode, std::move(info.missingFilesAndDirs));
 }
 
 void MediaPlayer::Impl::onError(QProcess::ProcessError error)
