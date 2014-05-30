@@ -40,8 +40,6 @@ include(vedgTools/LibraryGetTemplateUtilitiesPublicHeaders)
 set(PATH_TO_QT_CORE_UTILITIES ${PATH_TO_VEDG_TOOLS}/QtCoreUtilities)
 include(vedgTools/LibraryGetQtCoreUtilitiesPublicHeaders)
 
-include(vedgTools/EnableAutomoc)
-
 
 if(DEBUG_VENTUROUS)
     add_definitions(
@@ -54,6 +52,8 @@ include(vedgTools/AddErrorPrefixDefinition)
 
 
 set(Sources_Path src)
+set(MediaPlayer_Path ${Sources_Path}/MediaPlayer)
+set(Audacious_Path ${MediaPlayer_Path}/Audacious)
 
 include_directories(
     ${PATH_TO_CMAKE_MODULES}/include
@@ -61,11 +61,13 @@ include_directories(
     ${QtCoreUtilities_PublicHeaders_Path}
     ${${Target_Name}_PublicHeaders_Path}
     ${${Target_Name}_PublicHeaders_Path}/${Target_Name}
+    ${MediaPlayer_Path} ${Audacious_Path}
 )
 
 set(Sources
-    ${Sources_Path}/ItemTree.cpp ${Sources_Path}/AudaciousMediaPlayer.cpp
-    ${Sources_Path}/AddingItems.cpp ${Sources_Path}/History.cpp
+    ${Sources_Path}/ItemTree.cpp ${Sources_Path}/History.cpp
+    ${Sources_Path}/AddingItems.cpp ${MediaPlayer_Path}/MediaPlayer.cpp
+    ${Audacious_Path}/Audacious.cpp ${Audacious_Path}/ManagedAudacious.cpp
 )
 
 
@@ -79,6 +81,6 @@ include(vedgTools/LibraryLinkQtCoreUtilitiesToTarget)
 
 set_target_properties(${Target_Name} PROPERTIES
                         PUBLIC_HEADER
-    "ItemTree.hpp;ItemTree-inl.hpp;History.hpp;MediaPlayer.hpp;AddingItems.hpp")
+    "ItemTree.hpp;ItemTree-inl.hpp;History.hpp;AddingItems.hpp;MediaPlayer.hpp")
 
 message(</${Target_Name}>)

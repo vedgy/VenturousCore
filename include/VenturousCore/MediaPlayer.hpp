@@ -19,102 +19,129 @@
 # ifndef VENTUROUS_CORE_MEDIA_PLAYER_HPP
 # define VENTUROUS_CORE_MEDIA_PLAYER_HPP
 
-# include <functional>
+# include <QString>
+# include <QStringList>
+# include <QObject>
+
 # include <vector>
 # include <string>
 # include <memory>
 
 
-class MediaPlayer
+class MediaPlayer : public QObject
 {
+    Q_OBJECT
 public:
-    /// This type is used for external function, which is called after task is
-    /// finished.
-    /// @param crashExit True if external player crashed.
-    /// @param exitCode Exit code of external player.
-    /// @param missingFilesAndDirs If this vector is not empty,
-    /// there were errors in the last task. This collection contains all
-    /// missing items reported by external player.
-    typedef std::function < void(bool crashExit, int exitCode,
-                                 std::vector<std::string> missingFilesAndDirs) >
-    FinishedSlot;
-    /// This type is used for external function, which is called after
-    /// external process error happens.
-    /// @param errorMessage Message that describes error, suitable for
-    /// displaying to user.
-    typedef std::function<void(std::string errorMessage)> ErrorSlot;
+    /// @brief If (isRunning() &&
+    ///                 (ExitExternalPlayerOnQuit || {process is managed})) {
+    /// exits external player process }.
+    virtual ~MediaPlayer() = default;
 
     /// @return Name of the external player.
-    static std::string playerName();
-
+    virtual const QString & playerName() const = 0;
     /// @brief Sets essential external player options. Should be called while
     /// external player is running; otherwise may have no effect.
-    static void setEssentialOptions();
-
+    virtual void setEssentialOptions() = 0;
     /// @brief Shows/hides external player window. Should be called while
     /// external player is running; otherwise may have no effect.
-    static void setPlayerWindowVisible(bool visible);
+    virtual void setPlayerWindowVisible(bool visible) = 0;
+
+    /// @return true if player process is running.
+    /// NOTE: if a given MediaPlayer descendant uses managed external player,
+    /// this method only checks the state of attached process.
+    /// Independent player process is not taken into account in this case.
+    virtual bool isRunning() const = 0;
 
 
-    /// @brief Performs quick initialization.
-    /// Does not start media player process.
-    explicit MediaPlayer();
+    /// @brief All start() overloads ensure playing state of external player.
+    /// Player process may be started/restarted or just commanded to play.
+    /// @return false if player process has failed to start or exited
+    /// immediatelly; true otherwise.
 
-    /// @brief Ensures that external player quits gracefully if isRunning().
-    ~MediaPlayer();
-
-    /// @return true if player process that was started by this
-    /// instance of MediaPlayer is running.
-    bool isRunning() const;
-
-    /// @brief Replaces current finishedSlot with specified value.
-    void setFinishedSlot(FinishedSlot slot);
-    /// @brief Replaces current errorSlot with specified value.
-    void setErrorSlot(ErrorSlot slot);
-
-    /// @brief If (isRunning() == true) does nothing; otherwise starts
-    /// (or restarts) external player.
-    /// Playback of current external player's playlist will be started.
-    /// @return false if player has failed to start or quitted immediatelly;
-    /// true otherwise.
-    bool start();
-
-    /// @brief Starts player with specified path to item.
+    /// @brief Starts playback of current external player's playlist.
+    virtual bool start() = 0;
+    /// @brief Creates external player playlist with specified item and starts
+    /// playing it.
     /// @param pathToItem Absolute path to playable item.
-    /// @return The same as start() without arguments.
-    bool start(const std::string & pathToItem);
-
-    /// @brief Starts player with specified paths to items.
+    virtual bool start(const std::string & pathToItem) = 0;
+    /// @brief Creates external player playlist with specified items and starts
+    /// playing it.
     /// @param pathsToItems Absolute paths to playable items.
-    /// @return The same as start() without arguments.
-    bool start(const std::vector<std::string> & pathsToItems);
+    virtual bool start(const std::vector<std::string> & pathsToItems) = 0;
+
+    /// @brief Blocks signals and exits external player process.
+    /// NOTE: if a given MediaPlayer descendant uses managed external player,
+    /// only managed process would be exited.
+    virtual void exit() = 0;
 
     /// @brief If AutoSetOptions property is set to true [default], essential
-    /// player options are set each time start() is called. This ensures that
-    /// correct options are in use even if user manually changed them before.
+    /// player options are set each time external player process is
+    /// started/restarted. This ensures that correct options are in use even if
+    /// user manually set wrong options.
     /// However if user wants manual options handling or never changes them and
     /// wants better performance, this property can be set to false.
-
-    /// @return Current AutoSetOptions value.
-    bool getAutoSetOptions() const;
-    /// @param autoSet Desired AutoSetOptions value.
-    void setAutoSetOptions(bool autoSet);
+    bool autoSetOptions() const { return autoSetOptions_; }
+    void setAutoSetOptions(bool autoSet) { autoSetOptions_ = autoSet; }
 
     /// @brief If AutoHideWindow property is set to true, external player
-    /// window is hidden each time start() is called.
+    /// window is hidden each time external player process is started/restarted.
+    bool autoHideWindow() const { return autoHideWindow_; }
+    void setAutoHideWindow(bool autoHide) { autoHideWindow_ = autoHide; }
 
-    /// @return Current AutoHideWindow value.
-    bool getAutoHideWindow() const;
-    /// @param autoHide Desired AutoHideWindow value.
-    void setAutoHideWindow(bool autoHide);
+    /// @brief If ExitExternalPlayerOnQuit property is set to true [default],
+    /// external player process is finished in destructor if isRunning();
+    /// otherwise it would remain running.
+    /// NOTE: if player process is managed (attached), it is impossible to
+    /// detach and leave it running. In this case the property is ignored.
+    bool exitExternalPlayerOnQuit() const { return exitExternalPlayerOnQuit_; }
+    void setExitExternalPlayerOnQuit(bool exitOnQuit) {
+        exitExternalPlayerOnQuit_ = exitOnQuit;
+    }
 
-    /// @brief Blocks FinishedSlot and quits external player.
-    /// If external player is not running, call has no effect.
-    void quit();
+signals:
+    /// @brief Is emitted after managed player process has finished execution.
+    /// @param crashExit True if external player crashed.
+    /// @param exitCode Exit code of external player. Is valid only if
+    /// (crashExit == false).
+    /// @param errors List of external player errors.
+    /// @param missingFilesAndDirs List of missing items reported by
+    /// external player.
+    void finished(bool crashExit, int exitCode, QStringList errors,
+                  QStringList missingFilesAndDirs);
+
+    /// Is emitted when error happens in managed player process.
+    /// @param errorMessage Message that describes error, suitable for
+    /// displaying to user.
+    /// NOTE: if process fails to start, finished() would not be emitted.
+    /// isRunning() would return false in this case (if called from error()
+    /// signal handler).
+    void error(QString errorMessage);
+
+protected:
+    MediaPlayer() = default;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> impl_;
+    bool autoSetOptions_ = true;
+    bool autoHideWindow_ = false;
+    bool exitExternalPlayerOnQuit_ = true;
 };
+
+
+namespace GetMediaPlayer
+{
+/// @return List of available players.
+const QStringList & playerList();
+
+/// @param id Index in [0, playerList().size()).
+/// @return true if player with specified id uses detached external player
+/// process.
+bool isExternalPlayerProcessDetached(int id);
+
+/// @param id Index in [0, playerList().size()).
+/// @return MediaPlayer instance with specified id.
+/// NOTE: MediaPlayer descendants do not start external player process in
+/// constructor, so (getInstance(id).isRunning() == false).
+std::unique_ptr<MediaPlayer> instance(int id);
+}
 
 # endif // VENTUROUS_CORE_MEDIA_PLAYER_HPP
