@@ -23,12 +23,16 @@
 
 # include "MediaPlayer.hpp"
 
+# include "DetachedAudacious.hpp"
+# include "ManagedAudacious.hpp"
+
 # include <QString>
 # include <QStringList>
 # include <QObject>
 
 # include <cstddef>
 # include <cassert>
+# include <utility>
 # include <array>
 # include <stdexcept>
 # include <memory>
@@ -56,23 +60,38 @@ bool isExternalPlayerProcessDetached(const int id)
     return isDetached[id];
 }
 
-MediaPlayerPtr instance(const int id)
+std::pair<MediaPlayerPtr, QStringList> instance(const int id)
 {
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
     std::cout << "Player with id=" << id << " was requested." << std::endl;
 # endif
-    if (id != 0)
-        ;/// TODO: reset Audacious settings.
+
+    MediaPlayerPtr player;
+    QStringList errors;
+
+    const auto addErrorIfNotEmpty = [& errors](const QString & errorMessage) {
+        if (! errorMessage.isEmpty())
+            errors << errorMessage;
+    };
+
+    enum : int { detachedAudacious = 0, managedAudacious = 1 };
+
+    if (id != detachedAudacious)
+        addErrorIfNotEmpty(ConfigureDetachedAudacious::resetSettings());
 
     switch (id) {
-        case 0:
-            /// TODO: set Audacious settings.
-            return MediaPlayerPtr();
-        case 1:
-            return MediaPlayerPtr();
+        case detachedAudacious:
+            addErrorIfNotEmpty(ConfigureDetachedAudacious::setSettings());
+            player.reset(new DetachedAudacious);
+            break;
+        case managedAudacious:
+            player.reset(new ManagedAudacious);
+            break;
         default:
             throw std::out_of_range("id is out of player list bounds.");
     }
+
+    return { std::move(player), std::move(errors) };
 }
 
 }

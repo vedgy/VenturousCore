@@ -30,7 +30,7 @@ class Tree;
 
 namespace AddingItems
 {
-inline const QStringList & allMetaDataPatterns()
+inline const QStringList & allMetadataPatterns()
 {
     static const QStringList l { "*.cue" };
     return l;
@@ -54,7 +54,7 @@ inline const QStringList & allAudioPatterns()
 
 struct Policy {
     /// Files that match filePatterns can be added as items in itemTree.
-    QStringList filePatterns = allMetaDataPatterns();
+    QStringList filePatterns = allMetadataPatterns();
     /// Directory is considered to be media dir if it contains (as direct
     /// children!) files that match mediaDirFilePatterns.
     QStringList mediaDirFilePatterns = allAudioPatterns();

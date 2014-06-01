@@ -56,12 +56,13 @@ inline void execute(const QString & command)
     QProcess::execute(command);
 }
 
-inline void execute(const QString & command, const QStringList & arguments)
+inline void startDetached(const QString & command,
+                          const QStringList & arguments)
 {
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
     writeCommandAndArgs(command, arguments);
 # endif
-    QProcess::execute(command, arguments);
+    QProcess::startDetached(command, arguments);
 }
 
 inline void start(QProcess & process, const QString & command,

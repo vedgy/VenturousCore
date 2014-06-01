@@ -48,7 +48,7 @@ void Audacious::setEssentialOptions()
     AudaciousTools::setEssentialOptions();
 }
 
-void MediaPlayer::setPlayerWindowVisible(const bool visible)
+void Audacious::setPlayerWindowVisible(const bool visible)
 {
     AudaciousTools::setMainWindowVisible(visible);
 }

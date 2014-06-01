@@ -55,7 +55,7 @@ bool equalSubstr(const std::string & lhs, std::size_t lhsPos,
 }
 
 struct StderrInfo {
-    QString errorMessage;
+    QStringList errorMessages;
     QStringList missingFilesAndDirs;
 };
 
@@ -91,16 +91,17 @@ StderrInfo analyzeErrors(const std::string & errors)
         }
 
         if (equalSubstr(errors, start, errorStart)) {
-            if (info.errorMessage.isEmpty()) {
+            if (info.errorMessages.empty()) {
                 const auto errorEnd = errors.begin() + end;
                 if (std::search(errors.begin() + start + errorStart.size(),
                                 errorEnd,
                                 libcueFile.begin(), libcueFile.end())
                         != errorEnd) {
-                    info.errorMessage =
-                        QObject::tr("cue sheet support is not available in %1. "
-                                    "<i>libcue</i> is most likely not "
-                                    "installed.").arg(playerName());
+                    info.errorMessages
+                            << QObject::tr(
+                                "cue sheet support is not available in %1 "
+                                "(libcue is most likely not installed).")
+                            .arg(playerName());
                 }
             }
         }
@@ -211,7 +212,8 @@ bool ManagedAudacious::start(const QStringList & arguments)
                   << " was running when starting playback was requested."
                   << std::endl;
 # endif
-        PlayerUtilities::execute(AudaciousTools::playerCommand(), arguments);
+        PlayerUtilities::startDetached(AudaciousTools::playerCommand(),
+                                       arguments);
     }
     else {
         exit();
@@ -245,7 +247,7 @@ void ManagedAudacious::onFinished(const int exitCode,
 # endif
 
     AudaciousTools::StderrInfo info = AudaciousTools::analyzeErrors(errors);
-    emit finished(crashExit, exitCode, { std::move(info.errorMessage) },
+    emit finished(crashExit, exitCode, std::move(info.errorMessages),
                   std::move(info.missingFilesAndDirs));
 }
 
@@ -280,7 +282,7 @@ void ManagedAudacious::onError(const QProcess::ProcessError error)
             errorMessage = tr("an unknown error occurred.");
             break;
         default:
-            errorMessage = tr("unexpected error has occured.");
+            errorMessage = tr("unexpected error has occurred.");
     }
     emit this->error(std::move(errorMessage));
 }

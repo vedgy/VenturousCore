@@ -23,6 +23,7 @@
 # include <QStringList>
 # include <QObject>
 
+# include <utility>
 # include <vector>
 # include <string>
 # include <memory>
@@ -138,10 +139,11 @@ const QStringList & playerList();
 bool isExternalPlayerProcessDetached(int id);
 
 /// @param id Index in [0, playerList().size()).
-/// @return MediaPlayer instance with specified id.
+/// @return pair (MediaPlayer instance with specified id,
+/// list of error messages).
 /// NOTE: MediaPlayer descendants do not start external player process in
-/// constructor, so (getInstance(id).isRunning() == false).
-std::unique_ptr<MediaPlayer> instance(int id);
+/// constructor, so (instance(id).first.isRunning() == false).
+std::pair<std::unique_ptr<MediaPlayer>, QStringList> instance(int id);
 }
 
 # endif // VENTUROUS_CORE_MEDIA_PLAYER_HPP
