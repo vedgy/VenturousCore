@@ -71,6 +71,7 @@ set(Sources
     ${Sources_Path}/ItemTree.cpp ${Sources_Path}/History.cpp
     ${Sources_Path}/AddingItems.cpp ${MediaPlayer_Path}/MediaPlayer.cpp
     ${Audacious_Path}/Audacious.cpp ${Audacious_Path}/DetachedAudacious.cpp
+    ${Audacious_Path}/ConfigureDetachedAudacious.cpp
     ${Audacious_Path}/ManagedAudacious.cpp
 )
 

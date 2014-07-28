@@ -23,7 +23,8 @@
 
 # include "History.hpp"
 
-# include <CommonUtilities/Miscellaneous.hpp>
+# include <CommonUtilities/String.hpp>
+# include <CommonUtilities/Streams.hpp>
 
 # include <cstddef>
 # include <cassert>
@@ -58,17 +59,17 @@ bool History::load(const std::string & filename)
     while (items_.size() < maxSize_ && std::getline(is, line)) {
         const auto begin =
             std::find_if_not(line.begin(), line.end(),
-                             CommonUtilities::safeCtype<std::isspace>);
-        // skipping lines without non-whitespace characters.
+                             CommonUtilities::SafeCtype<std::isspace>());
         if (begin != line.end()) {
             if (begin == line.begin())
                 items_.emplace_back(std::move(line));
             else
                 items_.emplace_back(line.substr(begin - line.begin()));
         }
+        // Skipping lines without non-whitespace characters.
     }
 
-    return is.is_open() && ! is.bad();
+    return CommonUtilities::isStreamFine(is);
 }
 
 bool History::save(const std::string & filename) const
@@ -76,7 +77,7 @@ bool History::save(const std::string & filename) const
     std::ofstream os(filename);
     std::copy(items_.begin(), items_.end(),
               std::ostream_iterator<std::string>(os, "\n"));
-    return os;
+    return CommonUtilities::isStreamFine(os);
 }
 
 void History::setMaxSize(const std::size_t maxSize)

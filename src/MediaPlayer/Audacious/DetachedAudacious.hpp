@@ -35,7 +35,7 @@ public:
     bool isRunning() const override;
 
     /// @brief Quits external player.
-    void exit() override;
+    void exit() final;
 
 private:
     bool start(const QStringList & arguments) override;

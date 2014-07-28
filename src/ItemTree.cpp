@@ -18,6 +18,8 @@
 
 # include "ItemTree.hpp"
 
+# include <CommonUtilities/Streams.hpp>
+
 # include <cstddef>
 # include <cassert>
 # include <utility>
@@ -33,7 +35,7 @@ namespace ItemTree
 {
 namespace
 {
-struct CompNodesByName {
+struct CompareNodesByName {
     bool operator()(const Node & lhs, const Node & rhs) const {
         return lhs.name() < rhs.name();
     }
@@ -84,8 +86,9 @@ int Node::itemCount() const
 
 Node * Node::child(const std::string & name)
 {
-    const auto range = std::equal_range(children_.begin(), children_.end(),
-                                        Node(name, false), CompNodesByName());
+    const auto range = std::equal_range(
+                           children_.begin(), children_.end(),
+                           Node(name, false), CompareNodesByName());
     if (range.first == range.second)
         return nullptr;
     return & *range.first;
@@ -134,9 +137,8 @@ void Node::insertItem(std::string relativePath)
     // Empty names are not allowed, so this is fine.
     const std::size_t separatorPos = relativePath.find('/', 1);
     std::string firstDir, residue;
-    if (separatorPos == std::string::npos) {
+    if (separatorPos == std::string::npos)
         firstDir = std::move(relativePath);
-    }
     else {
         firstDir = relativePath.substr(0, separatorPos);
         // Skipping separator '/'.
@@ -149,7 +151,7 @@ void Node::insertItem(std::string relativePath)
     // equivalent to (residue.empty() == true).
     Node newNode(std::move(firstDir), residue.empty());
     auto range = std::equal_range(children_.begin(), children_.end(),
-                                  newNode, CompNodesByName());
+                                  newNode, CompareNodesByName());
 
     if (range.first == range.second)
         range.first = children_.insert(range.first, newNode);
@@ -198,7 +200,7 @@ void Node::validate() const
     if (children_.empty())
         return;
     if (! std::is_sorted(children_.cbegin(), children_.cend(),
-                         CompNodesByName())) {
+                         CompareNodesByName())) {
         throw Error(invalidStateMessage(name_) + " Children are not sorted "
                     "properly.");
     }
@@ -257,7 +259,7 @@ std::string Tree::load(const std::string & filename)
         nodeStack.emplace_back(& nodeStack.back()->children_.back());
     }
 
-    if (is.is_open() && ! is.bad()) {
+    if (CommonUtilities::isStreamFine(is)) {
         try {
             validate();
         }
@@ -275,7 +277,7 @@ bool Tree::save(const std::string & filename) const
     std::ofstream os(filename);
     for (const Node & topNode : root_.children())
         print(os, topNode);
-    return os;
+    return CommonUtilities::isStreamFine(os);
 }
 
 std::string Tree::getItemAbsolutePath(const int itemId) const

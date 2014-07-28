@@ -142,7 +142,7 @@ bool isExternalPlayerProcessDetached(int id);
 /// @return pair (MediaPlayer instance with specified id,
 /// list of error messages).
 /// NOTE: MediaPlayer descendants do not start external player process in
-/// constructor, so (instance(id).first.isRunning() == false).
+/// constructor, so (instance(id).first->isRunning() == false).
 std::pair<std::unique_ptr<MediaPlayer>, QStringList> instance(int id);
 }
 

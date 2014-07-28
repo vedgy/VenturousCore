@@ -33,13 +33,13 @@ public:
     ~ManagedAudacious() override;
 
     /// @return true if this Impl controls external player process.
-    bool isRunning() const override;
+    bool isRunning() const final;
 
     bool start() override;
 
     /// @brief If isRunning(), blocks signals and finishes
     /// playerProcess_ gracefully.
-    void exit() override;
+    void exit() final;
 
 private:
     bool start(const QStringList & arguments) override;

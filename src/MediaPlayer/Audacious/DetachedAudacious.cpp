@@ -21,7 +21,7 @@
 # include "PlayerUtilities.hpp"
 
 # include <QString>
-# include <QObject>
+# include <QStringList>
 
 
 DetachedAudacious::DetachedAudacious()
@@ -53,22 +53,4 @@ bool DetachedAudacious::start(const QStringList & arguments)
     if (! isRunning())
         launchedPlayer();
     return true;
-}
-
-
-
-namespace ConfigureDetachedAudacious
-{
-QString setSettings()
-{
-    /// TODO: implement!
-    return QString();
-}
-
-QString resetSettings()
-{
-    /// TODO: implement!
-    return QString();
-}
-
 }

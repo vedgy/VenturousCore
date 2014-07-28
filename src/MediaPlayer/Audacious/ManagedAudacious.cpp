@@ -28,6 +28,8 @@
 
 # include <QtCoreUtilities/String.hpp>
 
+# include <CommonUtilities/String.hpp>
+
 # include <QString>
 # include <QStringList>
 # include <QObject>
@@ -45,15 +47,6 @@ namespace AudaciousTools
 {
 namespace
 {
-/// @return true if (lhs.substr(lhsPos, rhs.size()) == rhs).
-/// NOTE: is safe to call if lhs.size() < lhsPos + rhs.size(). Returns false in
-/// this case.
-bool equalSubstr(const std::string & lhs, std::size_t lhsPos,
-                 const std::string & rhs)
-{
-    return lhs.compare(lhsPos, rhs.size(), rhs) == 0;
-}
-
 struct StderrInfo {
     QStringList errorMessages;
     QStringList missingFilesAndDirs;
@@ -73,40 +66,38 @@ StderrInfo analyzeErrors(const std::string & errors)
     std::set<std::string> encounteredItems;
     std::size_t prevEnd = 0;
     while (true) {
+        namespace Str = CommonUtilities::String;
+
         const std::size_t end = errors.find(missingFilesAndDirsEnd, prevEnd);
         if (end == std::string::npos)
             break;
-        std::size_t start;
-        {
-            // Set {start} to the position just after the last '\n' character in
-            // interval [prevEnd, end).
-            const auto rEnd = errors.rend();
-            start = rEnd - std::find(rEnd - end, rEnd - prevEnd, '\n');
-            if (start == prevEnd && prevEnd != 0) { // not found
+        std::size_t start = Str::Backward::find(errors, prevEnd, end, '\n');
+        if (start == Str::npos()) {
+            if (prevEnd != 0) {     // not found
                 std::cerr << VENTUROUS_CORE_ERROR_PREFIX "Unexpected "
                           << QtUtilities::qStringToString(playerName())
                           << " stderr format. Aborted parsing." << std::endl;
                 return info;
             }
+            start = 0;
         }
+        ++start;
+        // {start} is the position just after the last '\n' character in the
+        // interval [prevEnd, end).
 
-        if (equalSubstr(errors, start, errorStart)) {
-            if (info.errorMessages.empty()) {
-                const auto errorEnd = errors.begin() + end;
-                if (std::search(errors.begin() + start + errorStart.size(),
-                                errorEnd,
-                                libcueFile.begin(), libcueFile.end())
-                        != errorEnd) {
-                    info.errorMessages
-                            << QObject::tr(
-                                "cue sheet support is not available in %1 "
-                                "(libcue is most likely not installed).")
-                            .arg(playerName());
-                }
+        if (Str::equalSubstr(errors, start, errorStart)) {
+            if (info.errorMessages.empty() &&
+                    Str::find(errors, start + errorStart.size(), end,
+                              libcueFile) != Str::npos()) {
+                info.errorMessages
+                        << QObject::tr(
+                            "cue sheet support is not available in %1 "
+                            "(libcue is most likely not installed).")
+                        .arg(playerName());
             }
         }
         else {
-            if (equalSubstr(errors, start, missingFilesAndDirsStart)) {
+            if (Str::equalSubstr(errors, start, missingFilesAndDirsStart)) {
                 // If error prefix is present, skip it.
                 start += missingFilesAndDirsStart.size();
             }
