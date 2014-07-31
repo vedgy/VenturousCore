@@ -132,15 +132,30 @@ namespace
 AUDACIOUS_TOOLS_STRING_CONSTANT(on, "on\n")
 AUDACIOUS_TOOLS_STRING_CONSTANT(off, "off\n")
 
-/// @brief Sets Audacious playlist option to specified value - desiredStatus.
+/// @brief Assigns value to Audacious playlist option.
 /// @param optionName Playlist option to be set.
-void setStatus(const QString & optionName, const QString & desiredStatus)
+void setOption(const QString & optionName, const QString & value)
 {
     const QString baseCommand = toolCommand() + " playlist-" + optionName;
     const QString stdOut =
         PlayerUtilities::executeAndGetOutput(baseCommand + "-status");
-    if (stdOut != desiredStatus)
+    if (stdOut != value)
         PlayerUtilities::execute(baseCommand + "-toggle");
+}
+
+
+/// @return String returned by audtool playback-status command.
+QString statusString()
+{
+    return PlayerUtilities::executeAndGetOutput(
+               toolCommand() + " playback-status");
+}
+
+/// Statuses returned by audtool playback-status command.
+namespace Status
+{
+AUDACIOUS_TOOLS_STRING_CONSTANT(paused, "paused\n")
+AUDACIOUS_TOOLS_STRING_CONSTANT(playing, "playing\n")
 }
 
 }
@@ -152,10 +167,24 @@ bool isRunning()
                toolCommand() + " version").isEmpty();
 }
 
+MediaPlayer::Status status()
+{
+    const QString status = statusString();
+    if (status == Status::playing())
+        return MediaPlayer::Status::playing;
+    if (status == Status::paused())
+        return MediaPlayer::Status::paused;
+    return MediaPlayer::Status::stopped;
+}
+
 bool isPlaying()
 {
-    return PlayerUtilities::executeAndGetOutput(
-               toolCommand() + " playback-status") == "playing\n";
+    return statusString() == Status::playing();
+}
+
+void togglePause()
+{
+    PlayerUtilities::execute(toolCommand() + " playback-pause");
 }
 
 void requestQuit()
@@ -174,10 +203,10 @@ void quit()
 void setEssentialOptions()
 {
     if (isRunning()) {
-        setStatus("auto-advance", on());
-        setStatus("repeat", off());
-        setStatus("shuffle", off());
-        setStatus("stop-after", off());
+        setOption("auto-advance", on());
+        setOption("repeat", off());
+        setOption("shuffle", off());
+        setOption("stop-after", off());
     }
 }
 

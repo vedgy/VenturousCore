@@ -40,6 +40,16 @@ bool DetachedAudacious::isRunning() const
     return AudaciousTools::isRunning();
 }
 
+MediaPlayer::Status DetachedAudacious::status() const
+{
+    return AudaciousTools::status();
+}
+
+void DetachedAudacious::togglePause()
+{
+    AudaciousTools::togglePause();
+}
+
 void DetachedAudacious::exit()
 {
     exitingPlayer();

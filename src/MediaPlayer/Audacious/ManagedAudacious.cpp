@@ -139,11 +139,23 @@ bool ManagedAudacious::isRunning() const
     return playerProcess_.state() != QProcess::NotRunning;
 }
 
+MediaPlayer::Status ManagedAudacious::status() const
+{
+    return isRunning() ? AudaciousTools::status() :
+           MediaPlayer::Status::stopped;
+}
+
 bool ManagedAudacious::start()
 {
     if (isRunning())
         return Audacious::start();
     return start(playerArguments_);
+}
+
+void ManagedAudacious::togglePause()
+{
+    if (isRunning())
+        AudaciousTools::togglePause();
 }
 
 void ManagedAudacious::exit()

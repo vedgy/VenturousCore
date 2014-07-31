@@ -43,7 +43,7 @@ public:
 protected:
     explicit Audacious(QStringList playerArguments);
 
-    /// @brief Passes arguments to Audacious and ensures its playing state.
+    /// @brief Passes arguments to Audacious and ensures its playing status.
     /// @return false if player process has failed to start or exited
     /// immediatelly; true otherwise.
     virtual bool start(const QStringList & arguments) = 0;
@@ -88,8 +88,14 @@ AUDACIOUS_TOOLS_STRING_CONSTANT(toolCommand, "audtool")
 /// @return true if Audacious process is running.
 bool isRunning();
 
-/// @return true if Audacious is in playing state.
+/// @return Status of Audacious as reported by statusString().
+MediaPlayer::Status status();
+
+/// @return true if Audacious has playing status.
 bool isPlaying();
+
+/// @brief Pauses/unpauses playback.
+void togglePause();
 
 /// @brief Issues a command to quit Audacious.
 void requestQuit();

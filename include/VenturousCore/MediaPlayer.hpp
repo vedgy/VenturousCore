@@ -33,6 +33,16 @@ class MediaPlayer : public QObject
 {
     Q_OBJECT
 public:
+    enum class Status : unsigned char
+    {
+        stopped,    ///< player process is not running OR
+                    ///<   (player process is running, playback is stopped);
+        paused,     ///< player process is running, playback is paused;
+        playing     ///< player process is running, playback is active.
+    };
+    /// @return Translatable name of status.
+    static const QString & toString(Status status);
+
     /// @brief If (isRunning() &&
     ///                 (ExitExternalPlayerOnQuit || {process is managed})) {
     /// exits external player process }.
@@ -53,8 +63,12 @@ public:
     /// Independent player process is not taken into account in this case.
     virtual bool isRunning() const = 0;
 
+    /// @return Current player status.
+    /// NOTE: the note for isRunning() applies to this method.
+    virtual Status status() const = 0;
 
-    /// @brief All start() overloads ensure playing state of external player.
+
+    /// @brief All start() overloads ensure playing status of external player.
     /// Player process may be started/restarted or just commanded to play.
     /// @return false if player process has failed to start or exited
     /// immediatelly; true otherwise.
@@ -69,6 +83,9 @@ public:
     /// playing it.
     /// @param pathsToItems Absolute paths to playable items.
     virtual bool start(const std::vector<std::string> & pathsToItems) = 0;
+
+    /// @brief Pauses/unpauses playback if isRunning().
+    virtual void togglePause() = 0;
 
     /// @brief Blocks signals and exits external player process.
     /// NOTE: if a given MediaPlayer descendant uses managed external player,

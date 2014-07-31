@@ -149,7 +149,7 @@ void ItemAdder::addMediaDirFirst()
 
 QStringList ItemAdder::getFileList() const
 {
-    return dir_.entryList(policy_.filePatterns);;
+    return dir_.entryList(policy_.filePatterns);
 }
 
 bool ItemAdder::isMediaDir() const

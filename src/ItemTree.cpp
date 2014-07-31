@@ -268,8 +268,7 @@ std::string Tree::load(const std::string & filename)
         }
         return std::string();
     }
-    else
-        return "reading file \"" + filename + "\" failed.";
+    return "reading file \"" + filename + "\" failed.";
 }
 
 bool Tree::save(const std::string & filename) const

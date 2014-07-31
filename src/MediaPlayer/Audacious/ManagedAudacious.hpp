@@ -35,7 +35,11 @@ public:
     /// @return true if this Impl controls external player process.
     bool isRunning() const final;
 
+    Status status() const override;
+
     bool start() override;
+
+    void togglePause() override;
 
     /// @brief If isRunning(), blocks signals and finishes
     /// playerProcess_ gracefully.

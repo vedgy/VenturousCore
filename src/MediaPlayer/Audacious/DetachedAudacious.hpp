@@ -34,6 +34,10 @@ public:
     /// @return true if external player is running.
     bool isRunning() const override;
 
+    Status status() const override;
+
+    void togglePause() override;
+
     /// @brief Quits external player.
     void exit() final;
 

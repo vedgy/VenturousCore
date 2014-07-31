@@ -43,6 +43,17 @@ namespace
 typedef std::unique_ptr<MediaPlayer> MediaPlayerPtr;
 }
 
+const QString & MediaPlayer::toString(const Status status)
+{
+    static const std::array<QString, 3> statuses = {{
+            tr("stopped"), tr("paused"), tr("playing")
+        }
+    };
+    const std::size_t index = static_cast<std::size_t>(status);
+    assert(index < statuses.size());
+    return statuses[index];
+}
+
 namespace GetMediaPlayer
 {
 const QStringList & playerList()
