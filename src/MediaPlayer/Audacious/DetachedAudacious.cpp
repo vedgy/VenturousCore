@@ -20,6 +20,8 @@
 
 # include "PlayerUtilities.hpp"
 
+# include <CommonUtilities/ExceptionsToStderr.hpp>
+
 # include <QString>
 # include <QStringList>
 
@@ -31,8 +33,10 @@ DetachedAudacious::DetachedAudacious()
 
 DetachedAudacious::~DetachedAudacious()
 {
-    if (exitExternalPlayerOnQuit())
-        exit();
+    CommonUtilities::exceptionsToStderr([this] {
+        if (exitExternalPlayerOnQuit())
+            exit();
+    }, VENTUROUS_CORE_ERROR_PREFIX "In ~DetachedAudacious(): ");
 }
 
 bool DetachedAudacious::isRunning() const

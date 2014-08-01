@@ -29,6 +29,7 @@
 # include <QtCoreUtilities/String.hpp>
 
 # include <CommonUtilities/String.hpp>
+# include <CommonUtilities/ExceptionsToStderr.hpp>
 
 # include <QString>
 # include <QStringList>
@@ -130,8 +131,10 @@ ManagedAudacious::ManagedAudacious()
 
 ManagedAudacious::~ManagedAudacious()
 {
-    playerProcess_.blockSignals(true);
-    exit();
+    CommonUtilities::exceptionsToStderr([this] {
+        playerProcess_.blockSignals(true);
+        exit();
+    }, VENTUROUS_CORE_ERROR_PREFIX "In ~ManagedAudacious(): ");
 }
 
 bool ManagedAudacious::isRunning() const
