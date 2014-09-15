@@ -136,15 +136,15 @@ private:
     }
 
     /// @brief Should be called if command was found in fileContents_.
-    /// @param entryStart The position of the first line of sought-for entry
+    /// * entryStart - the position of the first line of sought-for entry
     /// (the position past the end of heading_ line) in fileContents_.
-    /// @param entryEnd The position of the EOL just before the first line of
+    /// * entryEnd - the position of the EOL just before the first line of
     /// the next entry or fileContents_.size() if sought-for entry is the last.
-    /// @param lineStart The position in fileContents_ past the first
+    /// * lineStart - the position in fileContents_ past the first
     /// keyCommandSeparator_ in the line with key_.
-    /// @param commandStart The position in fileContents_ of the first symbol of
+    /// * commandStart - the position in fileContents_ of the first symbol of
     /// command1_.
-    /// @param commandEnd The position in fileContents_ past the last symbol of
+    /// * commandEnd - the position in fileContents_ past the last symbol of
     /// command2_.
     using OnRegisteredCommand = std::function < void(
                                     std::size_t entryStart,
@@ -152,12 +152,12 @@ private:
                                     std::size_t lineStart,
                                     std::size_t commandStart,
                                     std::size_t commandEnd) >;
-    /// @param lineStart The same as in OnRegisteredCommand.
-    /// @param lineEnd The position of the EOL symbol in the line with key_ or
+    /// * lineStart - the same as in OnRegisteredCommand.
+    /// * lineEnd - the position of the EOL symbol in the line with key_ or
     /// fileContents_.size() if this line is the last.
     using OnMissingCommand = std::function < void(
                                  std::size_t lineStart, std::size_t lineEnd) >;
-    /// @param entryStart The same as in OnRegisteredCommand.
+    /// * entryStart - the same as in OnRegisteredCommand.
     using OnMissingKey = std::function<void(std::size_t entryStart)>;
     using OnMissingEntry = std::function<void()>;
 
@@ -168,16 +168,16 @@ private:
         OnMissingEntry onMissingEntry;
     };
 
-    /// @param entryStart The same as in OnRegisteredCommand.
-    /// @param entryEnd The same as in OnRegisteredCommand.
-    /// @param lineStart The same as in OnRegisteredCommand.
-    /// @param lineEnd The same as in OnMissingCommand.
+    /// * entryStart - the same as in OnRegisteredCommand.
+    /// * entryEnd - the same as in OnRegisteredCommand.
+    /// * lineStart - the same as in OnRegisteredCommand.
+    /// * lineEnd - the same as in OnMissingCommand.
     void handleKeyLine(const Handlers & handlers, std::size_t entryStart,
                        std::size_t entryEnd, std::size_t lineStart,
                        std::size_t lineEnd);
 
-    /// @param entryStart The same as in OnRegisteredCommand.
-    /// @param entryEnd The same as in OnRegisteredCommand.
+    /// * entryStart - the same as in OnRegisteredCommand.
+    /// * entryEnd - the same as in OnRegisteredCommand.
     void handleEntry(const Handlers & handlers, std::size_t entryStart,
                      std::size_t entryEnd);
 
@@ -185,12 +185,12 @@ private:
 
 
     const std::string filename_;
+    bool isTurningOffPluginNeeded_ = false;
     const char headingStart_ = '[', headingEnd_ = ']',
                keyCommandSeparator_ = '=', commandsSeparator_ = ';';
     const std::string heading_ = "song_change", key_ = "cmd_line_end",
                       command1_ = "ventool", command2_ = "next";
     std::string fileContents_;
-    bool isTurningOffPluginNeeded_ = false;
 };
 
 
@@ -370,11 +370,11 @@ void Config::prepareResetting()
                 ++commandEnd;
             }
             // Leave one whitespace if possible.
-            if (CommonUtilities::safeCtype<std::isspace>(
+            if (CommonUtilities::safeCtype<std::isspace>((unsigned char)
             fileContents_[commandStart])) {
                 ++commandStart;
             }
-            else if (CommonUtilities::safeCtype<std::isspace>(
+            else if (CommonUtilities::safeCtype<std::isspace>((unsigned char)
             fileContents_[commandEnd - 1])) {
                 --commandEnd;
             }
@@ -446,16 +446,16 @@ void Config::handleKeyLine(const Handlers & handlers,
     while ((commandIndex = Str::find(fileContents_, commandIndex, lineEnd,
                                      command1_)) != Str::npos()) {
         std::size_t commandEnd;
-        if ((! CommonUtilities::safeCtype<std::isalnum>(
-                    fileContents_[commandIndex - 1])) &&
+        if ((! CommonUtilities::safeCtype<std::isalnum>((unsigned char)
+                fileContents_[commandIndex - 1])) &&
                 (commandEnd = commandIndex + command1_.size()) < lineEnd &&
-                CommonUtilities::safeCtype<std::isspace>(
-                    fileContents_[commandEnd])) {
+                CommonUtilities::safeCtype<std::isspace>((unsigned char)
+                        fileContents_[commandEnd])) {
             Str::skipWsExceptEol(fileContents_, commandEnd);
             if (Str::equalSubstr(fileContents_, commandEnd, command2_) &&
                     ((commandEnd += command2_.size()) == fileContents_.size() ||
-                     ! CommonUtilities::safeCtype<std::isalnum>(
-                         fileContents_[commandEnd]))) {
+                     ! CommonUtilities::safeCtype<std::isalnum>((unsigned char)
+                             fileContents_[commandEnd]))) {
                 handlers.onRegisteredCommand(entryStart, entryEnd, lineStart,
                                              commandIndex, commandEnd);
                 return;

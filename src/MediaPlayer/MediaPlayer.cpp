@@ -68,7 +68,7 @@ bool isExternalPlayerProcessDetached(const int id)
 {
     constexpr std::array<bool, 2> isDetached = {{ true, false }};
     assert(id >= 0 && std::size_t(id) < isDetached.size());
-    return isDetached[id];
+    return isDetached[std::size_t(id)];
 }
 
 std::pair<MediaPlayerPtr, QStringList> instance(const int id)

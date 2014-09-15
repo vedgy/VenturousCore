@@ -29,7 +29,7 @@ class DetachedAudacious : public Audacious
 public:
     DetachedAudacious();
 
-    ~DetachedAudacious() override;
+    ~DetachedAudacious() noexcept override;
 
     /// @return true if external player is running.
     bool isRunning() const override;

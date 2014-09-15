@@ -56,10 +56,12 @@ template<class StringCollection>
 StringCollection Node::getAllItems() const
 {
     StringCollection result;
+    const auto nItems =
+        static_cast<typename StringCollection::size_type>(itemCount());
     if (name_.empty()) // root
-        TemplateUtilities::resize(result, itemCount());
+        TemplateUtilities::resize(result, nItems);
     else
-        TemplateUtilities::resize(result, itemCount(), name_ + '/');
+        TemplateUtilities::resize(result, nItems, name_ + '/');
     addAllItemsRelative(std::begin(result));
     return result;
 }

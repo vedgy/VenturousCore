@@ -30,7 +30,7 @@ class ManagedAudacious : public Audacious
 public:
     ManagedAudacious();
 
-    ~ManagedAudacious() override;
+    ~ManagedAudacious() noexcept override;
 
     /// @return true if this Impl controls external player process.
     bool isRunning() const final;

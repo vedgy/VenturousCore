@@ -46,6 +46,7 @@ std::string outOfBoundsErrorMessage()
 
 }
 
+History::Error::~Error() noexcept = default;
 
 bool History::load(const std::string & filename)
 {
@@ -63,8 +64,10 @@ bool History::load(const std::string & filename)
         if (begin != line.end()) {
             if (begin == line.begin())
                 items_.emplace_back(std::move(line));
-            else
-                items_.emplace_back(line.substr(begin - line.begin()));
+            else {
+                items_.emplace_back(line.substr(
+                                        std::size_t(begin - line.begin())));
+            }
         }
         // Skipping lines without non-whitespace characters.
     }
@@ -83,8 +86,10 @@ bool History::save(const std::string & filename) const
 void History::setMaxSize(const std::size_t maxSize)
 {
     maxSize_ = std::min(maxSize, maxMaxSize());
-    if (items_.size() > maxSize_)
-        items_.erase(items_.begin() + maxSize_, items_.end());
+    if (items_.size() > maxSize_) {
+        items_.erase(items_.begin() + static_cast<std::ptrdiff_t>(maxSize),
+                     items_.end());
+    }
 }
 
 void History::push(std::string entry)
@@ -103,7 +108,8 @@ void History::remove(std::vector<std::size_t> indices)
     if (indices.size() == 1) {
         if (indices.back() >= items_.size())
             throw Error(outOfBoundsErrorMessage());
-        items_.erase(items_.begin() + indices.back());
+        items_.erase(items_.begin() +
+                     static_cast<std::ptrdiff_t>(indices.back()));
         return;
     }
 

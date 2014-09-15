@@ -19,6 +19,8 @@
 # ifndef VENTUROUS_CORE_HISTORY_HPP
 # define VENTUROUS_CORE_HISTORY_HPP
 
+# include <CommonUtilities/CopyAndMoveSemantics.hpp>
+
 # include <cstddef>
 # include <vector>
 # include <deque>
@@ -39,6 +41,8 @@ public:
     {
     public:
         explicit Error(const std::string & sWhat) : std::runtime_error(sWhat) {}
+        COPYABLE_AND_MOVABLE(Error)
+        ~Error() noexcept override;
     };
 
     /// @brief Clears history and loads entries from file. Not more than

@@ -33,6 +33,8 @@
 
 namespace ItemTree
 {
+Error::~Error() noexcept = default;
+
 namespace
 {
 struct CompareNodesByName {
@@ -249,7 +251,8 @@ std::string Tree::load(const std::string & filename)
             return wrongFileFormatMessage() + " Unexpectedly large indent.";
 
         // Node's level is determined by indent.
-        nodeStack.erase(nodeStack.begin() + 1 + indent, nodeStack.end());
+        nodeStack.erase(nodeStack.begin() + 1 + std::ptrdiff_t(indent),
+                        nodeStack.end());
 
         const bool playable = (line[indent] == itemSymbol);
         std::string name = std::move(line).substr(indent + 1);
@@ -312,7 +315,8 @@ void Tree::validate() const
 
 RandomItemChooser::RandomItemChooser()
     : RandomItemChooser(
-        std::chrono::system_clock::now().time_since_epoch().count())
+        static_cast<Seed>(
+            std::chrono::system_clock::now().time_since_epoch().count()))
 {
 }
 

@@ -19,6 +19,8 @@
 # ifndef VENTUROUS_CORE_ITEM_TREE_HPP
 # define VENTUROUS_CORE_ITEM_TREE_HPP
 
+# include <CommonUtilities/CopyAndMoveSemantics.hpp>
+
 # include <cstdint>
 # include <vector>
 # include <deque>
@@ -33,10 +35,12 @@ class Error : public std::runtime_error
 {
 public:
     explicit Error(const std::string & sWhat) : std::runtime_error(sWhat) {}
+    COPYABLE_AND_MOVABLE(Error)
+    ~Error() noexcept override;
 };
 
 
-/// @brief Playable entity (directory or file) is called "Item".\n
+/// @brief Playable entity (directory or file) is called "Item".
 /// Node can be either Item or directory that contains Items at some nesting
 /// level.
 class Node

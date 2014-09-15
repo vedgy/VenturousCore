@@ -129,7 +129,7 @@ ManagedAudacious::ManagedAudacious()
             SLOT(onError(QProcess::ProcessError)));
 }
 
-ManagedAudacious::~ManagedAudacious()
+ManagedAudacious::~ManagedAudacious() noexcept
 {
     CommonUtilities::exceptionsToStderr([this] {
         playerProcess_.blockSignals(true);
@@ -287,7 +287,7 @@ void ManagedAudacious::onError(const QProcess::ProcessError error)
         case QProcess::UnknownError:
             errorMessage = tr("an unknown error occurred.");
             break;
-        default:
+        case QProcess::Timedout:
             errorMessage = tr("unexpected error has occurred.");
     }
     emit this->error(std::move(errorMessage));

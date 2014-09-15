@@ -31,7 +31,7 @@ DetachedAudacious::DetachedAudacious()
 {
 }
 
-DetachedAudacious::~DetachedAudacious()
+DetachedAudacious::~DetachedAudacious() noexcept
 {
     CommonUtilities::exceptionsToStderr([this] {
         if (exitExternalPlayerOnQuit())
