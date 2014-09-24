@@ -44,7 +44,7 @@
 # include <QDir>
 # else
 # include <QFileInfo>
-// QtGui dependency! But only for Qt4 and not in Unix.
+/// NOTE: QtGui dependency! But only for Qt4 and not in Unix.
 # include <QDesktopServices>
 # endif
 # endif // Q_STANDARD_PATHS_AVAILABLE

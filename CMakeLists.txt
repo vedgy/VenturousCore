@@ -80,8 +80,13 @@ qt_wrap_cpp(${Target_Name} Sources ${Headers_Path}/MediaPlayer.hpp)
 
 include(vedgTools/LibraryAddTarget)
 
+set(QtLinkList Core . ${QT_QTCORE_LIBRARY})
+if(WIN32)
+    # This target depends on QtGui (QDesktopServices) in case of WIN32 and Qt4.
+    set(QtLinkList ${QtLinkList} ${QT_QTGUI_LIBRARY})
+endif()
 include(vedgTools/LinkQt)
-linkQt(${Target_Name} Core . ${QT_QTCORE_LIBRARY})
+linkQt(${Target_Name} ${QtLinkList})
 
 include(vedgTools/LibraryLinkQtCoreUtilitiesToTarget)
 
