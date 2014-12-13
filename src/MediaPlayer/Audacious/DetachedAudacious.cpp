@@ -28,8 +28,7 @@
 
 DetachedAudacious::DetachedAudacious()
     : Audacious( { AudaciousTools::startPlaybackArg() })
-{
-}
+{}
 
 DetachedAudacious::~DetachedAudacious() noexcept
 {

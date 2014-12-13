@@ -88,7 +88,7 @@ public:
     /// @return StringCollection with paths to all Items - descendants of this
     /// node. If this node is playable, its path is added too. All paths start
     /// with this->name().
-    template<class StringCollection = std::vector<std::string>>
+    template <class StringCollection = std::vector<std::string>>
     StringCollection getAllItems() const;
 
 private:
@@ -115,13 +115,13 @@ private:
     /// appended, each path will start with this->name().
     /// @return Iterator past the last of the modified strings (equal to
     /// std::next(begin, this->itemCount())).
-    template<typename ForwardStringIterator>
+    template <typename ForwardStringIterator>
     ForwardStringIterator addAllItems(ForwardStringIterator begin) const;
 
     /// @brief Appends all playable descendants' paths, relative to this node,
     /// to ends of strings, starting from begin.
     /// If this node is an Item, fixes its path.
-    template<typename ForwardStringIterator>
+    template <typename ForwardStringIterator>
     void addAllItemsRelative(ForwardStringIterator begin) const;
 
     /// @brief Inserts new Item as a descendant. If descendant with specified
@@ -208,7 +208,7 @@ public:
         InputStringIterator begin, InputStringIterator end)
     { return root_.descendantPath(begin, end); }
 
-    template<class StringCollection = std::vector<std::string>>
+    template <class StringCollection = std::vector<std::string>>
     StringCollection getAllItems() const {
         return root_.getAllItems<StringCollection>();
     }

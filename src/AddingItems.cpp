@@ -33,6 +33,7 @@
 # include <QDir>
 
 # include <cstddef>
+# include <utility>
 # include <algorithm>
 # include <string>
 
@@ -61,6 +62,8 @@ public:
     void addItems();
 
 private:
+    typedef void (ItemAdder::*AddMethod)();
+
     /// @brief Recursively adds items from dir_ to itemTree_. Starts with adding
     /// files, then considers adding media dirs.
     void addFilesFirst();
@@ -81,11 +84,9 @@ private:
 
     /// @brief Enters dir_'s subdirectory named subdirName;
     /// calls (this->*method)(); restores dir_ and curPath_ to original state.
-    template <typename AddMethod>
     void addSubdir(AddMethod method, const QString & subdirName);
 
     /// @brief Calls addSubdir(method, <name>) for all subdirectories of dir_.
-    template <typename AddMethod>
     void addSubdirs(AddMethod method);
 
     /// Holds current directory.
@@ -189,7 +190,6 @@ void ItemAdder::addMediaDir()
 # endif
 }
 
-template <typename AddMethod>
 void ItemAdder::addSubdir(const AddMethod method, const QString & subdirName)
 {
     dir_.cd(subdirName);
@@ -206,15 +206,14 @@ void ItemAdder::addSubdir(const AddMethod method, const QString & subdirName)
     curPath_.erase(prevSize);
 }
 
-template <typename AddMethod>
-void ItemAdder::addSubdirs(const AddMethod method)
+void ItemAdder::addSubdirs(AddMethod method)
 {
     const QStringList items = dir_.entryList(
                                   QDir::AllDirs | QDir::NoDotAndDotDot);
 
     std::for_each(items.begin(), items.end(),
     [&](const QString & subdirName) {
-        addSubdir(method, subdirName);
+        addSubdir(std::move(method), subdirName);
     });
 }
 

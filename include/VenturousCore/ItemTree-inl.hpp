@@ -52,7 +52,7 @@ std::deque<Node *> Node::descendantPath(
 }
 
 
-template<class StringCollection>
+template <class StringCollection>
 StringCollection Node::getAllItems() const
 {
     StringCollection result;
@@ -67,7 +67,7 @@ StringCollection Node::getAllItems() const
 }
 
 
-template<typename ForwardStringIterator>
+template <typename ForwardStringIterator>
 ForwardStringIterator Node::addAllItems(const ForwardStringIterator begin) const
 {
     ForwardStringIterator it = begin;
@@ -80,7 +80,7 @@ ForwardStringIterator Node::addAllItems(const ForwardStringIterator begin) const
     return it;
 }
 
-template<typename ForwardStringIterator>
+template <typename ForwardStringIterator>
 void Node::addAllItemsRelative(ForwardStringIterator begin) const
 {
     if (playable_) {

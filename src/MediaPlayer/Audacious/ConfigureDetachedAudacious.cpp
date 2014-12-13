@@ -599,7 +599,7 @@ QString PluginRegistry::writeChangesToFile()
 std::string PluginRegistry::sharedLibrary()
 {
     const QString path = "/usr/lib%1/audacious/General/song_change.so";
-    for (QString dir : { "", "/x86_64-linux-gnu", "/i386-linux-gnu" }) {
+    for (const QString dir : { "", "/x86_64-linux-gnu", "/i386-linux-gnu" }) {
         const QString filename = path.arg(dir);
         if (QFileInfo(filename).isFile())
             return QtUtilities::qStringToString(filename);
