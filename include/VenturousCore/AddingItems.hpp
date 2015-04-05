@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -30,15 +30,14 @@ class Tree;
 
 namespace AddingItems
 {
-inline const QStringList & allMetadataPatterns()
+inline QStringList allMetadataPatterns()
 {
-    static const QStringList l { "*.cue" };
-    return l;
+    return { "*.cue" };
 }
 
-inline const QStringList & allAudioPatterns()
+inline QStringList allAudioPatterns()
 {
-    static const QStringList l {
+    return {
         "*.mp3",
         "*.m4a", "*.m4b", "*.m4p", "*.m4v", "*.m4r", "*.3gp", "*.mp4", "*.aac",
         "*.ogg", "*.oga",
@@ -49,28 +48,28 @@ inline const QStringList & allAudioPatterns()
         "*.tta",
         "*.wma"
     };
-    return l;
 }
 
-struct Policy {
+struct Patterns {
     /// Files that match filePatterns can be added as items in itemTree.
-    QStringList filePatterns = allMetadataPatterns();
+    QStringList filePatterns;
     /// Directory is considered to be media dir if it contains (as direct
     /// children!) files that match mediaDirFilePatterns.
-    QStringList mediaDirFilePatterns = allAudioPatterns();
+    QStringList mediaDirFilePatterns;
+};
 
+struct Policy {
     /// If true, files that match filePatterns are inserted in itemTree.
     bool addFiles = true;
     /// If true, media dirs are inserted in itemTree.
     bool addMediaDirs = true;
 
-    /// Next 2 flags are considered only if
+    /// The next 2 flags are considered only if
     /// (addFiles && addDirsWithMedia == true) and files that match
     /// filePatterns were found in media dir. Let's denote such a situation as
-    /// 'BothFound'. All 4 combinations of next 2 flags are allowed.
+    /// 'BothFound'. All 4 combinations of the next 2 flags are allowed.
 
-    /// If true, files that match filePatterns are added
-    /// in case of BothFound.
+    /// If true, files that match filePatterns are added in case of BothFound.
     bool ifBothAddFiles = true;
     /// If true, media dir is added in case of BothFound.
     bool ifBothAddMediaDirs = false;
@@ -84,11 +83,11 @@ inline bool operator != (const Policy & lhs, const Policy & rhs)
 }
 
 
-/// @brief Scans specified directory and its subdirectories recursively
-/// according to policy. Inserts found items in itemTree.
+/// @brief Scans the specified directory and its subdirectories recursively
+/// according to patterns and policy. Inserts found items in itemTree.
 /// @param dirName Absolute path to directory.
-void addDir(const QString & dirName, const Policy & policy,
-            ItemTree::Tree & itemTree);
+void addDir(const QString & dirName, const Patterns & patterns,
+            const Policy & policy, ItemTree::Tree & itemTree);
 
 }
 

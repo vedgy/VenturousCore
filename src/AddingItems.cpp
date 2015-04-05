@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -42,9 +42,7 @@ namespace AddingItems
 {
 bool operator == (const Policy & lhs, const Policy & rhs)
 {
-    return lhs.filePatterns == rhs.filePatterns &&
-           lhs.mediaDirFilePatterns == rhs.mediaDirFilePatterns &&
-           lhs.addFiles == rhs.addFiles &&
+    return lhs.addFiles == rhs.addFiles &&
            lhs.addMediaDirs == rhs.addMediaDirs &&
            lhs.ifBothAddFiles == rhs.ifBothAddFiles &&
            lhs.ifBothAddMediaDirs == rhs.ifBothAddMediaDirs;
@@ -56,8 +54,8 @@ namespace
 class ItemAdder
 {
 public:
-    explicit ItemAdder(const QString & dirName, const Policy & policy,
-                       ItemTree::Tree & itemTree);
+    explicit ItemAdder(const QString & dirName, const Patterns & patterns,
+                       const Policy & policy, ItemTree::Tree & itemTree);
 
     void addItems();
 
@@ -72,7 +70,7 @@ private:
     /// from it.
     void addMediaDirFirst();
 
-    /// @return List of all files in dir_ that match policy.filePatterns.
+    /// @return List of all files in dir_ that match patterns_.filePatterns.
     QStringList getFileList() const;
     /// @return true if dir_ is media dir.
     bool isMediaDir() const;
@@ -94,19 +92,20 @@ private:
     /// Holds path to current directory.
     std::string curPath_;
 
+    const Patterns & patterns_;
     const Policy & policy_;
     ItemTree::Tree & itemTree_;
 };
 
 
-ItemAdder::ItemAdder(const QString & dirName, const Policy & policy,
-                     ItemTree::Tree & itemTree)
+ItemAdder::ItemAdder(const QString & dirName, const Patterns & patterns,
+                     const Policy & policy, ItemTree::Tree & itemTree)
     : dir_(dirName), curPath_(QtUtilities::qStringToString(dir_.path())),
-      policy_(policy), itemTree_(itemTree)
+      patterns_(patterns), policy_(policy), itemTree_(itemTree)
 {
     dir_.setFilter(QDir::Files | QDir::Readable | QDir::Hidden);
     if (policy_.addMediaDirs)
-        dir_.setNameFilters(policy_.mediaDirFilePatterns);
+        dir_.setNameFilters(patterns_.mediaDirFilePatterns);
 }
 
 void ItemAdder::addItems()
@@ -150,7 +149,7 @@ void ItemAdder::addMediaDirFirst()
 
 QStringList ItemAdder::getFileList() const
 {
-    return dir_.entryList(policy_.filePatterns);
+    return dir_.entryList(patterns_.filePatterns);
 }
 
 bool ItemAdder::isMediaDir() const
@@ -220,13 +219,13 @@ void ItemAdder::addSubdirs(AddMethod method)
 }
 
 
-void addDir(const QString & dirName, const Policy & policy,
-            ItemTree::Tree & itemTree)
+void addDir(const QString & dirName, const Patterns & patterns,
+            const Policy & policy, ItemTree::Tree & itemTree)
 {
     if (! policy.addFiles && ! policy.addMediaDirs)
         return;
 
-    ItemAdder adder(dirName, policy, itemTree);
+    ItemAdder adder(dirName, patterns, policy, itemTree);
     adder.addItems();
 }
 

@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
 */
 
 # ifdef DEBUG_VENTUROUS_MEDIA_PLAYER
-# include <QtCoreUtilities/String.hpp>
-# include <iostream>
+#   include <QtCoreUtilities/String.hpp>
+#   include <iostream>
 # endif
 
 
@@ -29,24 +29,24 @@
 # include <CommonUtilities/String.hpp>
 # include <CommonUtilities/Streams.hpp>
 
-# define Q_STANDARD_PATHS_AVAILABLE QT_VERSION >= 0x050000
-
 # include <QString>
 # include <QObject>
 # include <QDir>
 # include <QFile>
 # include <QFileInfo>
 
+# define Q_STANDARD_PATHS_AVAILABLE QT_VERSION >= 0x050000
+
 # if Q_STANDARD_PATHS_AVAILABLE
-# include <QStandardPaths>
+#   include <QStandardPaths>
 # else // Q_STANDARD_PATHS_AVAILABLE
-# ifdef __unix__
-# include <QDir>
-# else
-# include <QFileInfo>
-/// NOTE: QtGui dependency! But only for Qt4 and not in Unix.
-# include <QDesktopServices>
-# endif
+#   ifdef __unix__
+#       include <QDir>
+#   else
+#       include <QFileInfo>
+        /// NOTE: QtGui dependency! But only for Qt4 and not in Unix.
+#       include <QDesktopServices>
+#   endif
 # endif // Q_STANDARD_PATHS_AVAILABLE
 
 # include <cstddef>
@@ -537,7 +537,7 @@ QString PluginRegistry::prepareSetting()
             index = 0;
         else {
             // Format version is missing.
-            std::string format = formatString + " 8\n";
+            const std::string format = formatString + " 8\n";
             std::size_t firstNonWs = 0;
             Str::skipWs(fileContents_, firstNonWs);
             fileContents_.replace(0, firstNonWs, format);
@@ -722,12 +722,12 @@ QString Settings::getSettingsPath()
 # if Q_STANDARD_PATHS_AVAILABLE
         QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)
 # else // Q_STANDARD_PATHS_AVAILABLE
-# ifdef __unix__
+#   ifdef __unix__
         QDir::homePath() + "/.config"
-# else
+#   else
         QFileInfo(QDesktopServices::storageLocation(
                       QDesktopServices::DataLocation)).path()
-# endif
+#   endif
 # endif // Q_STANDARD_PATHS_AVAILABLE
         + "/audacious/";
 
