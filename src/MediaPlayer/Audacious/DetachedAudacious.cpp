@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ DetachedAudacious::~DetachedAudacious() noexcept
 {
     CommonUtilities::exceptionsToStderr([this] {
         if (exitExternalPlayerOnQuit())
-            exit();
+            exitPlayer();
     }, VENTUROUS_CORE_ERROR_PREFIX "In ~DetachedAudacious(): ");
 }
 
@@ -53,7 +53,7 @@ void DetachedAudacious::togglePause()
     AudaciousTools::togglePause();
 }
 
-void DetachedAudacious::exit()
+void DetachedAudacious::exitPlayer()
 {
     exitingPlayer();
     AudaciousTools::requestQuit();

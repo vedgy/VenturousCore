@@ -252,8 +252,9 @@ std::string Tree::load(const std::string & filename)
             return wrongFileFormatMessage() + " Unexpectedly large indent.";
 
         // Node's level is determined by indent.
-        nodeStack.erase(nodeStack.begin() + 1 + std::ptrdiff_t(indent),
-                        nodeStack.end());
+        nodeStack.erase(
+            nodeStack.begin() + 1 + static_cast<std::ptrdiff_t>(indent),
+            nodeStack.end());
 
         const bool playable = (line[indent] == itemSymbol);
         std::string name = std::move(line).substr(indent + 1);

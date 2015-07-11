@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -89,8 +89,8 @@ public:
 
     /// @brief Blocks signals and exits external player process.
     /// NOTE: if a given MediaPlayer descendant uses managed external player,
-    /// only managed process would be exited.
-    virtual void exit() = 0;
+    /// only managed process will be finished.
+    virtual void exitPlayer() = 0;
 
     /// @brief If AutoSetOptions property is set to true [default], essential
     /// player options are set each time external player process is

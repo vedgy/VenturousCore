@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ public:
 
     /// @brief If isRunning(), blocks signals and finishes
     /// playerProcess_ gracefully.
-    void exit() final;
+    void exitPlayer() final;
 
 private:
     bool start(const QStringList & arguments) override;

@@ -44,7 +44,7 @@
 #       include <QDir>
 #   else
 #       include <QFileInfo>
-        /// NOTE: QtGui dependency! But only for Qt4 and not in Unix.
+/// NOTE: QtGui dependency! But only for Qt4 and not on POSIX-compliant system.
 #       include <QDesktopServices>
 #   endif
 # endif // Q_STANDARD_PATHS_AVAILABLE
@@ -60,8 +60,6 @@
 # include <fstream>
 
 
-namespace ConfigureDetachedAudacious
-{
 namespace
 {
 namespace Str = CommonUtilities::String;
@@ -240,10 +238,15 @@ class Settings
 public:
     explicit Settings();
 
+    /// @brief Configures Audacious for detached mode.
+    /// @return Empty string on success; error message in case of error.
     QString set() const;
+    /// @brief Removes Venturous-specific configuration of Audacious.
+    /// @return Empty string on success; error message in case of error.
     QString reset() const;
 
 private:
+    /// @return Path to Audacious settings directory.
     static QString getSettingsPath();
 
     QString configurationCacheError(const QString & action) const {
@@ -255,7 +258,11 @@ private:
     bool isConfigured() const { return QFileInfo(configuredCache_).exists(); }
 
 
-    const QString path_, configuredCache_;
+    /// Stores the result of getSettingsPath().
+    const QString path_;
+    /// Stores the path to the file that exists if and only if Audacious is
+    /// configured for detached mode.
+    const QString configuredCache_;
 };
 
 
@@ -342,7 +349,7 @@ void Config::prepareResetting()
                         entryStart = 0;
                     }
                     else {
-                        // There is at least one entry before ours -> leave
+                        // There is at least one entry before ours -> leave the
                         // preceding entries and one EOL.
                         entryStart =
                             fileContents_.find('\n', entryStart + 1) + 1;
@@ -370,11 +377,11 @@ void Config::prepareResetting()
                 ++commandEnd;
             }
             // Leave one whitespace if possible.
-            if (CommonUtilities::safeCtype<std::isspace>((unsigned char)
+            if (CommonUtilities::safeCtype<std::isspace>(
             fileContents_[commandStart])) {
                 ++commandStart;
             }
-            else if (CommonUtilities::safeCtype<std::isspace>((unsigned char)
+            else if (CommonUtilities::safeCtype<std::isspace>(
             fileContents_[commandEnd - 1])) {
                 --commandEnd;
             }
@@ -446,16 +453,16 @@ void Config::handleKeyLine(const Handlers & handlers,
     while ((commandIndex = Str::find(fileContents_, commandIndex, lineEnd,
                                      command1_)) != Str::npos()) {
         std::size_t commandEnd;
-        if ((! CommonUtilities::safeCtype<std::isalnum>((unsigned char)
-                fileContents_[commandIndex - 1])) &&
+        if ((! CommonUtilities::safeCtype<std::isalnum>(
+                    fileContents_[commandIndex - 1])) &&
                 (commandEnd = commandIndex + command1_.size()) < lineEnd &&
-                CommonUtilities::safeCtype<std::isspace>((unsigned char)
-                        fileContents_[commandEnd])) {
+                CommonUtilities::safeCtype<std::isspace>(
+                    fileContents_[commandEnd])) {
             Str::skipWsExceptEol(fileContents_, commandEnd);
             if (Str::equalSubstr(fileContents_, commandEnd, command2_) &&
                     ((commandEnd += command2_.size()) == fileContents_.size() ||
-                     ! CommonUtilities::safeCtype<std::isalnum>((unsigned char)
-                             fileContents_[commandEnd]))) {
+                     ! CommonUtilities::safeCtype<std::isalnum>(
+                         fileContents_[commandEnd]))) {
                 handlers.onRegisteredCommand(entryStart, entryEnd, lineStart,
                                              commandIndex, commandEnd);
                 return;
@@ -649,6 +656,49 @@ bool PluginRegistry::setEnabled(std::size_t index, const bool enabled)
 
 
 
+/// @brief Sets Config and PluginRegistry into detached mode.
+/// @return Empty string on success; error message in case of error.
+QString setDetached(const std::string & path)
+{
+    Config config(path);
+    config.prepareSetting();
+
+    PluginRegistry pluginRegistry(path);
+    QString errorMessage = pluginRegistry.prepareSetting();
+    if (! errorMessage.isEmpty())
+        return errorMessage;
+
+    errorMessage = config.writeChangesToFile();
+    if (! errorMessage.isEmpty())
+        return errorMessage;
+
+    errorMessage = pluginRegistry.writeChangesToFile();
+    return errorMessage;
+}
+
+/// @brief Reverts Venturous-specific Audacious settings in Config and
+/// PluginRegistry.
+/// @return Empty string on success; error message in case of error.
+QString resetDetached(const std::string & path)
+{
+    Config config(path);
+    config.prepareResetting();
+
+    QString errorMessage;
+    if (config.isTurningOffPluginNeeded()) {
+        PluginRegistry pluginRegistry(path);
+        pluginRegistry.prepareResetting();
+        errorMessage = pluginRegistry.writeChangesToFile();
+        if (! errorMessage.isEmpty())
+            return errorMessage;
+    }
+
+    errorMessage = config.writeChangesToFile();
+    return errorMessage;
+}
+
+
+
 Settings::Settings()
     : path_(getSettingsPath()),
       configuredCache_(path_ + "ConfiguredForDetachedAudacious.venturous")
@@ -657,62 +707,36 @@ Settings::Settings()
 
 QString Settings::set() const
 {
-    QString result;
     if (isConfigured())
-        return result; // DetachedAudacious is already configured.
+        return QString(); // DetachedAudacious is already configured.
     AudaciousTools::quit();
     QDir().mkpath(path_);
-    const std::string stdPath = QtUtilities::qStringToString(path_);
 
-    Config config(stdPath);
-    config.prepareSetting();
-    PluginRegistry pluginRegistry(stdPath);
-    result = pluginRegistry.prepareSetting();
-    if (! result.isEmpty())
-        return result;
+    const QString errorMessage =
+        setDetached(QtUtilities::qStringToString(path_));
+    if (! errorMessage.isEmpty())
+        return errorMessage;
 
-    result = config.writeChangesToFile();
-    if (! result.isEmpty())
-        return result;
-    result = pluginRegistry.writeChangesToFile();
-    if (! result.isEmpty())
-        return result;
-
-    {
-        QFile file(configuredCache_);
-        if (! file.open(QIODevice::WriteOnly))
-            return configurationCacheError(QObject::tr("create"));
-    }
-    return result;
+    QFile file(configuredCache_);
+    if (! file.open(QIODevice::WriteOnly))
+        return configurationCacheError(QObject::tr("create"));
+    return QString();
 }
 
 QString Settings::reset() const
 {
-    QString result;
     if (! isConfigured())
-        return result; // DetachedAudacious is not configured.
+        return QString(); // DetachedAudacious is not configured.
     AudaciousTools::quit();
-    const std::string stdPath = QtUtilities::qStringToString(path_);
 
-    Config config(stdPath);
-    config.prepareResetting();
-
-    if (config.isTurningOffPluginNeeded()) {
-        PluginRegistry pluginRegistry(stdPath);
-        pluginRegistry.prepareResetting();
-
-        result = pluginRegistry.writeChangesToFile();
-        if (! result.isEmpty())
-            return result;
-    }
-
-    result = config.writeChangesToFile();
-    if (! result.isEmpty())
-        return result;
+    const QString errorMessage =
+        resetDetached(QtUtilities::qStringToString(path_));
+    if (! errorMessage.isEmpty())
+        return errorMessage;
 
     if (! QFile::remove(configuredCache_))
         return configurationCacheError(QObject::tr("remove"));
-    return result;
+    return QString();
 }
 
 
@@ -739,8 +763,11 @@ QString Settings::getSettingsPath()
     return path;
 }
 
-}
+} // END unnamed namespace
 
+
+namespace ConfigureDetachedAudacious
+{
 QString setSettings()
 {
     return Settings().set();
@@ -751,4 +778,4 @@ QString resetSettings()
     return Settings().reset();
 }
 
-}
+} // END namespace ConfigureDetachedAudacious

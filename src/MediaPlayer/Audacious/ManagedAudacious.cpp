@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ ManagedAudacious::~ManagedAudacious() noexcept
 {
     CommonUtilities::exceptionsToStderr([this] {
         playerProcess_.blockSignals(true);
-        exit();
+        exitPlayer();
     }, VENTUROUS_CORE_ERROR_PREFIX "In ~ManagedAudacious(): ");
 }
 
@@ -161,7 +161,7 @@ void ManagedAudacious::togglePause()
         AudaciousTools::togglePause();
 }
 
-void ManagedAudacious::exit()
+void ManagedAudacious::exitPlayer()
 {
     exitingPlayer();
 
@@ -222,7 +222,7 @@ bool ManagedAudacious::start(const QStringList & arguments)
                                        arguments);
     }
     else {
-        exit();
+        exitPlayer();
         AudaciousTools::quit();
         PlayerUtilities::start(playerProcess_, AudaciousTools::playerCommand(),
                                arguments);

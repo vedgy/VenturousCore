@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -283,9 +283,9 @@ private:
 
     /// NOTE: distribution bounds are determined by tree.itemCount(), which is
     /// not expected to change often. So the distribution is cached.
-    /// Primary reason for caching is not performance but possible dependency
-    /// between subsequent values, so for some Distribution implementation
-    /// caching might lead to better randomness.
+    /// The primary reason for caching is not performance but possible
+    /// dependency between subsequent values, so for some Distribution
+    /// implementation caching might lead to better randomness.
     Distribution distribution_ { 0, 0 };
 
     std::mt19937 engine_;
