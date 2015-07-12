@@ -214,6 +214,9 @@ public:
     QString writeChangesToFile();
 
 private:
+    /// @return Plugin registry format version for the currently installed
+    /// Audacious version or empty string if Audacious is not installed.
+    static std::string formatVersion();
     /// @return Absolute path to shared library or empty string if the library
     /// could not be located.
     static std::string sharedLibrary();
@@ -539,12 +542,19 @@ QString PluginRegistry::prepareSetting()
     bool contentsChanged = false;
     std::size_t index;
     {
-        const std::string formatString = "format";
+        const std::string formatString = "format ";
         if (Str::equalSubstr(fileContents_, 0, formatString))
-            index = 0;
+            index = formatString.size();
         else {
             // Format version is missing.
-            const std::string format = formatString + " 8\n";
+            const std::string version = formatVersion();
+            if (version.empty()) {
+                return configuringFailedMessage() +
+                       QObject::tr("could not determine %1 version."
+                                   " Is it installed?").arg(
+                           AudaciousTools::playerName());
+            }
+            const std::string format = formatString + version + '\n';
             std::size_t firstNonWs = 0;
             Str::skipWs(fileContents_, firstNonWs);
             fileContents_.replace(0, firstNonWs, format);
@@ -602,6 +612,22 @@ QString PluginRegistry::writeChangesToFile()
     return writeContentsToFile(filename_, fileContents_);
 }
 
+
+std::string PluginRegistry::formatVersion()
+{
+    const AudaciousTools::Version version = AudaciousTools::version();
+    if (version.major < 0 || version.minor < 0)
+        return std::string();
+    if (version.major > 3)
+        return "10"; // The latest supported version.
+    if (version.major == 3) {
+        if (version.minor >= 7)
+            return "10";
+        if (version.minor == 6)
+            return "9";
+    }
+    return "8"; // The earliest supported version.
+}
 
 std::string PluginRegistry::sharedLibrary()
 {

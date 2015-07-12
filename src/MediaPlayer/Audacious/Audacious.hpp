@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 # define VENTUROUS_CORE_AUDACIOUS_HPP
 
 # include "MediaPlayer.hpp"
+
+# include <CommonUtilities/FunctionConstant.hpp>
 
 # include <QString>
 # include <QStringList>
@@ -75,15 +77,25 @@ private slots:
 
 namespace AudaciousTools
 {
-# define AUDACIOUS_TOOLS_STRING_CONSTANT(NAME, VALUE)    \
-    inline const QString & NAME() {                      \
-    static const QString value{ VALUE }; return value; }
+# define AUDACIOUS_TOOLS_STRING_CONSTANT(name, value) \
+    NAMESPACE_FUNCTION_CONSTANT(QString, name, value)
 
 AUDACIOUS_TOOLS_STRING_CONSTANT(playerName, "Audacious")
 AUDACIOUS_TOOLS_STRING_CONSTANT(playerCommand, "audacious")
 AUDACIOUS_TOOLS_STRING_CONSTANT(startPlaybackArg, "-p")
 AUDACIOUS_TOOLS_STRING_CONSTANT(addToTemporaryPlaylistArg, "-E")
 AUDACIOUS_TOOLS_STRING_CONSTANT(toolCommand, "audtool")
+
+/// @return Version of the installed Audacious or empty string if Audacious is
+/// not installed.
+QString versionString();
+
+struct Version
+{
+    int major, minor;
+};
+/// @return Parsed versionString() or { -1, -1 } if Audacious is not installed.
+Version version();
 
 /// @return true if Audacious process is running.
 bool isRunning();

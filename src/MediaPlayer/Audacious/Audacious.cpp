@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -25,9 +25,13 @@
 # include <QString>
 # include <QStringList>
 
+# include <cstddef>
 # include <utility>
+# include <string>
+# include <stdexcept>
 # include <chrono>
 # include <thread>
+# include <iostream>
 
 
 namespace
@@ -160,6 +164,51 @@ AUDACIOUS_TOOLS_STRING_CONSTANT(playing, "playing\n")
 
 }
 
+
+QString versionString()
+{
+    const QString output =
+        PlayerUtilities::executeAndGetOutput(playerCommand() + " -v");
+
+    int start = playerName().size();
+    if (! output.startsWith(playerName()) || output[start] != ' ')
+        return QString();
+    ++start;
+    int end = output.indexOf(' ', start);
+    if (end < 0)
+        end = output.size();
+
+    return output.mid(start, end - start);
+}
+
+Version version()
+{
+    const std::string str = QtUtilities::qStringToString(versionString());
+    if (! str.empty()) {
+        try {
+            Version result;
+            std::size_t pos;
+            result.major = std::stoi(str, & pos);
+            result.minor = 0;
+            if (pos < str.size()) {
+                if (str[pos] != '.') {
+                    throw std::logic_error(
+                        "missing period in the version string");
+                }
+                if (++pos < str.size())
+                    result.minor = std::stoi(str.substr(pos));
+            }
+            return result;
+        }
+        catch (const std::logic_error & e) {
+            const std::string name = QtUtilities::qStringToString(playerName());
+            std::cerr << VENTUROUS_CORE_ERROR_PREFIX "Unexpected " << name
+                      << " version format. Assuming that " << name
+                      << " is not installed. Error: " << e.what() << std::endl;
+        }
+    }
+    return { -1, -1 };
+}
 
 bool isRunning()
 {
