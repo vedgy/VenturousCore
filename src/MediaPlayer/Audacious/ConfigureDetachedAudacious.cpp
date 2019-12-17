@@ -1,6 +1,6 @@
 /*
  This file is part of VenturousCore.
- Copyright (C) 2014, 2015 Igor Kushnir <igorkuo AT Google mail>
+ Copyright (C) 2014, 2015, 2019 Igor Kushnir <igorkuo AT Google mail>
 
  VenturousCore is free software: you can redistribute it and/or
  modify it under the terms of the GNU General Public License as published by
@@ -619,9 +619,11 @@ std::string PluginRegistry::formatVersion()
     if (version.major < 0 || version.minor < 0)
         return std::string();
     if (version.major > 3)
-        return "10"; // The latest supported version.
+        return "11"; // The latest supported version.
     if (version.major == 3) {
-        if (version.minor >= 7)
+        if (version.minor >= 8)
+            return "11";
+        if (version.minor == 7)
             return "10";
         if (version.minor == 6)
             return "9";
