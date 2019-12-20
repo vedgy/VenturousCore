@@ -33,7 +33,7 @@
 /// condition items().size() <= maxSize() is always true.
 /// Entries are guaranteed to be erased only from the back. The only exception:
 /// remove() method erases arbitrary entries.
-/// Enties are gauranteed to be added only at the front.
+/// Entries are guaranteed to be added only at the front.
 class History
 {
 public:
